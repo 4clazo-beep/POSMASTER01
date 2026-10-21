@@ -7,39 +7,38 @@
 
 <script>
  const firebaseConfig = {
-
   apiKey: "AIzaSyD7mc5dbKm8yc5hmum8VJuCDrxR_wTeRpY",
-
   authDomain: "posmaster001.firebaseapp.com",
-
   projectId: "posmaster001",
-
   storageBucket: "posmaster001.firebasestorage.app",
-
   messagingSenderId: "1067059995733",
-
   appId: "1:1067059995733:web:93ec0f88f7748e6be660dc"
-
 };
-
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  // --- ESTADO GLOBAL DE LA APLICACIÓN ---
-let state = {
-    products: JSON.parse(localStorage.getItem('pos_products')) || [],
-    sales: JSON.parse(localStorage.getItem('pos_sales')) || [],
-    clients: JSON.parse(localStorage.getItem('pos_clients')) || [],
-    accounts: JSON.parse(localStorage.getItem('pos_accounts')) || [
-        { id: 1, name: 'Caja General', type: 'Efectivo', balance: 0 },
-        { id: 2, name: 'Bancolombia', type: 'Banco', balance: 0 }
-    ],
-    providers: JSON.parse(localStorage.getItem('pos_providers')) || [],
-    payables: JSON.parse(localStorage.getItem('pos_payables')) || [],
-    cashRegister: JSON.parse(localStorage.getItem('pos_cash')) || { isOpen: false, initialAmount: 0, openTime: null, startTimeStamp: null },
-    cashHistory: JSON.parse(localStorage.getItem('pos_cash_history')) || [],
-    cart: []
-};
+
+  // --- ESTADO GLOBAL LIMPIO PARA CLIENTE NUEVO (EN CEROS) ---
+  let state = {
+      products: [],
+      sales: [],
+      clients: [],
+      accounts: [
+          { id: 1, name: 'Caja General', type: 'Efectivo', balance: 0 },
+          { id: 2, name: 'Bancolombia', type: 'Banco', balance: 0 }
+      ],
+      providers: [],
+      payables: [],
+      cashRegister: { isOpen: false, initialAmount: 0, openTime: null, startTimeStamp: null },
+      cashHistory: [],
+      cart: []
+  };
+
+  // Limpiar localStorage antiguo de pruebas para forzar el inicio en ceros con la nueva base de datos
+  if (!localStorage.getItem('pos_initialized_new_client')) {
+      localStorage.clear();
+      localStorage.setItem('pos_initialized_new_client', 'true');
+  }
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
