@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POS Master - Sistema Profesional de Venta e Inventario</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ANIMACIONES Y EFECTOS PARA LANDING */
+        @keyframes posLogoFloat {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.3));
+            }
+            50% {
+                transform: translateY(-4px) scale(1.06);
+                filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.8));
+            }
+        }
+
+        @keyframes posTextGlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .animated-pos-logo {
+            display: inline-block;
+            animation: posLogoFloat 3.5s ease-in-out infinite;
+            transition: transform 0.3s ease;
+        }
+
+        .animated-pos-logo:hover {
+            transform: scale(1.2) rotate(8deg);
+        }
+
+        .animated-pos-title {
+            background: linear-gradient(90deg, #ffffff, #34d399, #10b981, #ffffff);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: posTextGlow 4s linear infinite;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        /* TRANSICIÓN DE IMÁGENES DE FONDO DEVANECIDAS */
+        #bg-slideshow-container {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .bg-slide {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            filter: brightness(0.35);
+        }
+        .bg-slide.active {
+            opacity: 1;
+        }
+
+        /* ANIMACIÓN DE SÍMBOLOS */
+        .logo-particles-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .particle-symbol {
+            position: absolute;
+            font-size: 11px;
+            font-weight: 800;
+            color: #34d399;
+            pointer-events: none;
+            opacity: 0;
+            animation: floatSymbols 2.5s infinite ease-out;
+        }
+
+        .particle-symbol:nth-child(1) { top: -2px; left: 20%; animation-delay: 0s; }
+        .particle-symbol:nth-child(2) { top: -2px; left: 50%; animation-delay: 0.6s; color: #60a5fa; }
+        .particle-symbol:nth-child(3) { top: -2px; left: 75%; animation-delay: 1.2s; color: #f59e0b; }
+        .particle-symbol:nth-child(4) { top: -2px; left: 35%; animation-delay: 1.8s; color: #a78bfa; }
+
+        @keyframes floatSymbols {
+            0% { opacity: 0; transform: translateY(0) scale(0.6) rotate(0deg); }
+            30% { opacity: 0.9; }
+            100% { opacity: 0; transform: translateY(-22px) scale(1.3) rotate(15deg); }
+        }
+
+        .module-card {
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .module-fade-enter {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 font-sans antialiased text-slate-100 selection:bg-emerald-500 selection:text-white relative min-h-screen overflow-x-hidden">
+
+    <!-- CONTENEDOR DE IMÁGENES DE FONDO CON DESVANECIMIENTO -->
+    <div id="bg-slideshow-container">
+        <div id="slide-1" class="bg-slide active"></div>
+        <div id="slide-2" class="bg-slide"></div>
+    </div>
+
+    <!-- LANDING PAGE PROFESIONAL -->
+    <div id="landing-screen" class="relative z-10 min-h-screen flex flex-col justify-between p-4 md:p-8 backdrop-blur-sm bg-slate-900/60">
+        <!-- HEADER LANDING PAGE -->
+        <header class="max-w-7xl mx-auto w-full flex justify-between items-center py-4 px-2">
+            <div class="flex items-center gap-3">
+                <div class="animated-pos-logo logo-particles-container">
+                    <i class="fa-solid fa-cash-register text-emerald-400 text-3xl"></i>
+                    <span class="particle-symbol">+</span>
+                    <span class="particle-symbol">%</span>
+                    <span class="particle-symbol">$</span>
+                    <span class="particle-symbol">-</span>
+                </div>
+                <span class="animated-pos-title text-2xl md:text-3xl font-extrabold tracking-wide">POS Master</span>
+            </div>
+            <button onclick="enterSystem()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/25 transition transform hover:-translate-y-0.5 flex items-center gap-2 text-sm md:text-base">
+                <i class="fa-solid fa-right-to-bracket text-emerald-200"></i>
+                <span>Ingresar al Sistema</span>
+            </button>
+        </header>
+
+        <!-- HERO SECTION & MÓDULOS -->
+        <main class="max-w-6xl mx-auto w-full my-auto py-8 flex flex-col items-center text-center space-y-10">
+            <div class="space-y-4 max-w-3xl">
+                <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold text-xs md:text-sm px-4 py-1.5 rounded-full uppercase tracking-widest inline-block backdrop-blur-md">
+                    <i class="fa-solid fa-sparkles mr-2"></i> Software de Gestión Integral POS
+                </span>
+                <h1 class="text-3xl md:text-6xl font-black text-white leading-tight tracking-tight">
+                    El control total de tu negocio en una sola plataforma.
+                </h1>
+                <p class="text-slate-300 text-sm md:text-lg">
+                    Descubre el poder de administrar ventas, inventarios, caja, clientes y cartera con una interfaz fluida, ultra veloz y con soporte multicanal.
+                </p>
+            </div>
+
+            <!-- TARJETA DEL MÓDULO EXHIBIDO -->
+            <div class="w-full max-w-4xl relative">
+                <div id="landing-module-card" class="module-card bg-slate-800/80 border border-slate-700/80 rounded-3xl p-6 md:p-10 shadow-2xl backdrop-blur-md text-left flex flex-col md:flex-row gap-6 md:gap-8 items-center">
+                    <div class="w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-3xl md:text-5xl shadow-xl shrink-0">
+                        <i id="landing-module-icon" class="fa-solid fa-cart-shopping"></i>
+                    </div>
+                    <div class="flex-1 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span id="landing-module-tag" class="text-xs font-bold text-emerald-400 uppercase tracking-widest">Módulo 1 de 8</span>
+                        </div>
+                        <h3 id="landing-module-title" class="text-2xl md:text-3xl font-extrabold text-white">Terminal de Venta (POS)</h3>
+                        <p id="landing-module-desc" class="text-slate-300 text-sm md:text-base leading-relaxed">
+                            Agiliza tus cobros con una pantalla intuitiva, soporte para lectores de código de barras, cobro en efectivo o transferencias, y envío automático de comprobantes por WhatsApp.
+                        </p>
+                        <div class="pt-2 flex flex-wrap gap-3">
+                            <button onclick="enterSystem()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-lg text-xs md:text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-right-to-bracket"></i> Ir al Sistema
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTROLES CARRUSEL -->
+                <div class="flex justify-center items-center gap-4 mt-6">
+                    <button onclick="prevLandingModule()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 flex items-center justify-center transition">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <span class="text-xs text-slate-400 font-mono" id="landing-module-counter">1 / 8</span>
+                    <button onclick="nextLandingModule()" class="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 flex items-center justify-center transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- BOTÓN PRINCIPAL -->
+            <div class="pt-4">
+                <button onclick="enterSystem()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-lg md:text-xl px-10 py-4 rounded-2xl shadow-2xl shadow-emerald-500/30 transition transform hover:scale-105 flex items-center gap-3">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span>ACCEDER AL SISTEMA POS</span>
+                </button>
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="max-w-7xl mx-auto w-full text-center py-4 border-t border-slate-800/60 text-xs text-slate-400">
+            <p>© 2026 POS Master Inc. - Todos los derechos reservados. Sistema Pro de Gestión Comercial.</p>
+        </footer>
+    </div>
+
+    <script>
+        // REDIRECCIÓN DIRECTA Y LIMPIA A app.html (Conservando 100% tu base de datos y app.html)
+        function enterSystem() {
+            window.location.href = 'app.html';
+        }
+
+        // SLIDESHOW DE FONDOS
+        const bgImages = Array.from({ length: 20 }, (_, i) => `https://picsum.photos/1920/1080?random=${i + 100}`);
+        let currentBgIdx = 0;
+        let activeSlideNum = 1;
+
+        function initBgSlideshow() {
+            const s1 = document.getElementById('slide-1');
+            const s2 = document.getElementById('slide-2');
+            if (!s1 || !s2) return;
+
+            s1.style.backgroundImage = `url('${bgImages[0]}')`;
+
+            setInterval(() => {
+                currentBgIdx = (currentBgIdx + 1) % bgImages.length;
+                const url = bgImages[currentBgIdx];
+
+                if (activeSlideNum === 1) {
+                    s2.style.backgroundImage = `url('${url}')`;
+                    s2.classList.add('active');
+                    s1.classList.remove('active');
+                    activeSlideNum = 2;
+                } else {
+                    s1.style.backgroundImage = `url('${url}')`;
+                    s1.classList.add('active');
+                    s2.classList.remove('active');
+                    activeSlideNum = 1;
+                }
+            }, 6000);
+        }
+
+        // MÓDULOS DE LA LANDING
+        const landingModules = [
+            {
+                title: "Terminal de Venta (POS)",
+                icon: "fa-cart-shopping",
+                tag: "Módulo 1 de 8",
+                desc: "Agiliza tus cobros con una pantalla intuitiva, soporte para lectores de código de barras, cobro en efectivo o transferencias, y envío automático de comprobantes por WhatsApp."
+            },
+            {
+                title: "Módulo de Facturación Central",
+                icon: "fa-file-invoice-dollar",
+                tag: "Módulo 2 de 8",
+                desc: "Gestión unificada de todas las facturas de ventas emitidas a clientes y facturas de compras ingresadas de proveedores de manera clara y organizada."
+            },
+            {
+                title: "Control de Inventario",
+                icon: "fa-boxes-stacked",
+                tag: "Módulo 3 de 8",
+                desc: "Organiza tu stock en tiempo real, administra precios de costo y venta, códigos de barra, e importa masivamente tus datos desde Excel."
+            },
+            {
+                title: "Control & Cierre de Caja",
+                icon: "fa-vault",
+                tag: "Módulo 4 de 8",
+                desc: "Control estricto de apertura y cuadre diario de fondos. Evita descuadres mediante auditorías detalladas de ingresos en efectivo y transferencias."
+            },
+            {
+                title: "Bancos & Cuentas de Efectivo",
+                icon: "fa-wallet",
+                tag: "Módulo 5 de 8",
+                desc: "Vincular y monitorear múltiples cuentas bancarias (Nequi, Bancolombia, etc.) e ingresos en efectivo para un flujo de caja impecable."
+            },
+            {
+                title: "Cuentas por Pagar & Proveedores",
+                icon: "fa-truck-field",
+                tag: "Módulo 6 de 8",
+                desc: "Registra compromisos financieros con proveedores, programa pagos parciales y descuenta abonos automáticamente de tus cuentas registradas."
+            },
+            {
+                title: "Clientes & Cartera de Crédito",
+                icon: "fa-users",
+                tag: "Módulo 7 de 8",
+                desc: "Lleva el control de ventas fiadas/a crédito, historial de clientes, saldo acumulado de deudas y recepción de abonos directos."
+            },
+            {
+                title: "Estadísticas & Reportes Pro",
+                icon: "fa-chart-pie",
+                tag: "Módulo 8 de 8",
+                desc: "Analiza el rendimiento con gráficos comparativos, métricas clave (KPIs), productos más vendidos e informes diarios exportables por WhatsApp."
+            }
+        ];
+
+        let currentModuleIdx = 0;
+        let moduleAutoInterval = null;
+
+        function updateLandingModuleCard(index) {
+            const card = document.getElementById('landing-module-card');
+            if (!card) return;
+
+            card.classList.add('module-fade-enter');
+
+            setTimeout(() => {
+                const mod = landingModules[index];
+                document.getElementById('landing-module-icon').className = `fa-solid ${mod.icon}`;
+                document.getElementById('landing-module-tag').innerText = mod.tag;
+                document.getElementById('landing-module-title').innerText = mod.title;
+                document.getElementById('landing-module-desc').innerText = mod.desc;
+                document.getElementById('landing-module-counter').innerText = `${index + 1} / ${landingModules.length}`;
+
+                card.classList.remove('module-fade-enter');
+            }, 300);
+        }
+
+        function nextLandingModule() {
+            currentModuleIdx = (currentModuleIdx + 1) % landingModules.length;
+            updateLandingModuleCard(currentModuleIdx);
+            resetModuleTimer();
+        }
+
+        function prevLandingModule() {
+            currentModuleIdx = (currentModuleIdx - 1 + landingModules.length) % landingModules.length;
+            updateLandingModuleCard(currentModuleIdx);
+            resetModuleTimer();
+        }
+
+        function startModuleAutoSwitch() {
+            moduleAutoInterval = setInterval(() => {
+                currentModuleIdx = (currentModuleIdx + 1) % landingModules.length;
+                updateLandingModuleCard(currentModuleIdx);
+            }, 5000);
+        }
+
+        function resetModuleTimer() {
+            clearInterval(moduleAutoInterval);
+            startModuleAutoSwitch();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initBgSlideshow();
+            startModuleAutoSwitch();
+        });
+   
+   </script>
+</body>
+</html>
