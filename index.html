@@ -782,20 +782,23 @@ let state = {
 
             <!-- Contenedor de Vistas -->
             <div class="p-3 md:p-6 flex-1">
-                <!-- VISTA 9: FACTURACIÓN GENERAL -->
+               <!-- VISTA 9: FACTURACIÓN GENERAL -->
 <section id="view-billing" class="hidden space-y-4 md:space-y-6">
-    <!-- FILTROS Y BÚSQUEDA -->
-    <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 flex flex-col md:flex-row justify-between items-center gap-3 border border-slate-100">
-        <div class="flex items-center gap-2 w-full md:w-auto">
-            <input type="text" id="billing-search" oninput="renderBillingModule()" placeholder="Buscar por cliente, proveedor o #..." class="w-full md:w-80 px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+    <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+            <h2 class="text-base md:text-lg font-bold text-slate-800">Módulo de Facturación General</h2>
+            <p class="text-xs text-slate-500">Repositorio unificado de ventas, compras y abonos.</p>
+        </div>
+        <div class="flex items-center gap-3 w-full md:w-auto">
             <select id="billing-type-filter" onchange="renderBillingModule()" class="px-3 py-2 border border-slate-200 rounded-xl text-xs md:text-sm bg-slate-50 font-medium">
-                <option value="ALL">Todas las Facturas</option>
+                <option value="ALL">Todas las Facturas / Movimientos</option>
                 <option value="VENTA">Solo Ventas</option>
                 <option value="COMPRA">Solo Compras / Proveedores</option>
+                <option value="ABONO">Solo Abonos (Clientes y Proveedores)</option>
             </select>
-        </div>
-        <div class="text-xs text-slate-500 font-semibold">
-            Total Facturas: <span id="billing-count-badge" class="text-emerald-600 font-bold">0</span>
+            <div class="text-xs text-slate-500 font-semibold whitespace-nowrap">
+                Total: <span id="billing-count-badge" class="text-emerald-600 font-bold">0</span>
+            </div>
         </div>
     </div>
 
@@ -996,9 +999,8 @@ let state = {
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6" id="accounts-cards-grid"></div>
                 </section>
 
-               <!-- VISTA 5: CUENTAS POR PAGAR & PROVEEDORES -->
+          <!-- VISTA 5: CUENTAS POR PAGAR & PROVEEDORES -->
 <section id="view-payables" class="hidden space-y-4 md:space-y-6">
-    <!-- NUEVO: CONTENEDOR DE TARJETAS DE PROVEEDORES -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="provider-cards-grid"></div>
 
     <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 flex flex-col md:flex-row justify-between items-center gap-3">
@@ -1012,36 +1014,35 @@ let state = {
             </button>
         </div>
     </div>
-    <!-- ... Resto de la tabla de facturas ... -->
-                    <div class="bg-white rounded-2xl shadow-sm overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[600px]">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase">
-                                    <th class="p-3">Factura #</th>
-                                    <th class="p-3">Proveedor</th>
-                                    <th class="p-3">Fecha</th>
-                                    <th class="p-3">Total</th>
-                                    <th class="p-3">Saldo Pendiente</th>
-                                    <th class="p-3 text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="payables-table-body" class="divide-y divide-slate-100 text-xs md:text-sm text-slate-700"></tbody>
-                        </table>
-                    </div>
-                </section>
+    
+    <div class="bg-white rounded-2xl shadow-sm overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[600px]">
+            <thead>
+                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase">
+                    <th class="p-3">Factura #</th>
+                    <th class="p-3">Proveedor</th>
+                    <th class="p-3">Fecha</th>
+                    <th class="p-3">Total</th>
+                    <th class="p-3">Saldo Pendiente</th>
+                    <th class="p-3 text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="payables-table-body" class="divide-y divide-slate-100 text-xs md:text-sm text-slate-700"></tbody>
+        </table>
+    </div>
+</section>
+            <!-- VISTA 6: CLIENTES & CRÉDITO -->
+<section id="view-clients" class="hidden space-y-4 md:space-y-6">
+    <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+            <h2 class="text-base md:text-lg font-bold text-slate-800">Cartera de Clientes & Créditos</h2>
+            <p class="text-xs text-slate-500">Administra deudas acumuladas, saldos y recibe abonos.</p>
+        </div>
+        <button onclick="openClientModal()" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-xl text-xs md:text-sm transition">
+            <i class="fa-solid fa-user-plus mr-1.5"></i> Registrar Cliente
+        </button>
+    </div>
 
-                <!-- VISTA 6: CLIENTES & CRÉDITO -->
-                <section id="view-clients" class="hidden space-y-4 md:space-y-6">
-                    <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                        <div>
-                            <h2 class="text-base md:text-lg font-bold text-slate-800">Cartera de Clientes & Créditos</h2>
-                            <p class="text-xs text-slate-500">Administra deudas acumuladas, saldos y recibe abonos.</p>
-                        </div>
-                        <button onclick="openClientModal()" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-xl text-xs md:text-sm transition">
-                            <i class="fa-solid fa-user-plus mr-1.5"></i> Registrar Cliente
-                        </button>
-                    </div>
-                    <!-- 🌟 TARJETA GRÁFICA DE TOTAL DE CARTERA POR COBRAR -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-l-4 border-purple-600 bg-purple-50/20 sm:col-span-1">
             <p class="text-[10px] md:text-xs text-purple-700 font-bold uppercase flex items-center gap-1.5">
@@ -1052,22 +1053,19 @@ let state = {
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm overflow-x-auto">
-        <!-- Tabla de clientes existente -->
-        ...
-                    <div class="bg-white rounded-2xl shadow-sm overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[500px]">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase">
-                                    <th class="p-3 md:p-4">Cliente</th>
-                                    <th class="p-3 md:p-4">Teléfono</th>
-                                    <th class="p-3 md:p-4">Deuda Acumulada</th>
-                                    <th class="p-3 md:p-4 text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="clients-table-body" class="divide-y divide-slate-100 text-xs md:text-sm text-slate-700"></tbody>
-                        </table>
-                    </div>
-                </section>
+        <table class="w-full text-left border-collapse min-w-[500px]">
+            <thead>
+                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase">
+                    <th class="p-3 md:p-4">Cliente</th>
+                    <th class="p-3 md:p-4">Teléfono</th>
+                    <th class="p-3 md:p-4">Deuda Acumulada</th>
+                    <th class="p-3 md:p-4 text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="clients-table-body" class="divide-y divide-slate-100 text-xs md:text-sm text-slate-700"></tbody>
+        </table>
+    </div>
+</section>
 
                <!-- VISTA 7: ESTADÍSTICAS PROFESIONALES -->
 <section id="view-statistics" class="hidden space-y-4 md:space-y-6">
@@ -1154,7 +1152,7 @@ let state = {
         <div class="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-ranking-star text-indigo-600"></i> Top 5 Artículos Más Vendidos
+                    <i class="fa-solid fa-ranking-star text-indigo-600"></i> TOP 5 MAYOR ACTIVIDAD 
                 </h3>
                 <span class="text-[11px] bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg font-semibold">Volumen</span>
             </div>
@@ -1491,26 +1489,35 @@ let state = {
 
     <!-- SCRIPT DE FUNCIONALIDAD Y VALIDACIÓN DE LICENCIA -->
     <script>
-        function printThermalTicket() {
+   function printThermalTicket() {
     if (state.cart.length === 0) return alert('El carrito está vacío para imprimir tiquete.');
 
     const clientName = document.getElementById('cart-client-name').value.trim() || 'Cliente Ocasional';
     const total = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const invoiceRandomNum = Math.floor(10000 + Math.random() * 90000);
 
+    document.getElementById('ticket-invoice-num').innerText = `FACTURA DE VENTA: FAC-${invoiceRandomNum}`;
     document.getElementById('ticket-date').innerText = `Fecha: ${new Date().toLocaleString()}`;
     document.getElementById('ticket-client').innerText = `Cliente: ${clientName}`;
+    document.getElementById('ticket-payment-method').innerText = `Terminal: POS Principal`;
     
     const tbody = document.getElementById('ticket-items-body');
     tbody.innerHTML = '';
     state.cart.forEach(item => {
         tbody.innerHTML += `
             <tr>
-                <td style="padding: 2px 0;">${item.qty}x ${item.name}<br><span style="font-size: 9px;">$${Number(item.price).toLocaleString('es-CO')} c/u</span></td>
-                <td style="text-align: right; vertical-align: top; padding: 2px 0;">$${Number(item.price * item.qty).toLocaleString('es-CO')}</td>
+                <td style="padding: 3px 0; line-height: 1.2;">
+                    <b>${item.qty}x</b> ${item.name}<br>
+                    <span style="font-size: 9px; color: #444;">P/U: $${Number(item.price).toLocaleString('es-CO')}</span>
+                </td>
+                <td style="text-align: right; vertical-align: top; padding: 3px 0; font-weight: bold;">
+                    $${Number(item.price * item.qty).toLocaleString('es-CO')}
+                </td>
             </tr>
         `;
     });
 
+    document.getElementById('ticket-subtotal').innerText = formatCOP(total);
     document.getElementById('ticket-total').innerText = formatCOP(total);
 
     const ticketEl = document.getElementById('thermal-ticket');
@@ -2084,23 +2091,39 @@ function renderBillingModule() {
 
     let allInvoices = [];
 
-    // Facturas de Ventas
+    // 1. Procesar Ventas y Abonos de Clientes desde state.sales
     state.sales.forEach(s => {
-        allInvoices.push({
-            id: s.id,
-            rawId: s.id,
-            code: `FAC-V-${s.id.toString().slice(-5)}`,
-            type: 'VENTA',
-            date: s.date,
-            party: s.clientName || 'Cliente Ocasional',
-            method: s.method,
-            status: 'Completada',
-            total: s.total,
-            items: s.items || []
-        });
+        const isAbono = s.method && (s.method.includes('Abono') || s.method === 'Abono a Crédito');
+        if (!isAbono) {
+            allInvoices.push({
+                id: s.id,
+                rawId: s.id,
+                code: `FAC-V-${s.id.toString().slice(-5)}`,
+                type: 'VENTA',
+                date: s.date,
+                party: s.clientName || 'Cliente Ocasional',
+                method: s.method,
+                status: 'Completada',
+                total: s.total,
+                items: s.items || []
+            });
+        } else {
+            allInvoices.push({
+                id: s.id,
+                rawId: s.id,
+                code: `ABO-V-${s.id.toString().slice(-5)}`,
+                type: 'ABONO',
+                date: s.date,
+                party: s.clientName || 'Cliente',
+                method: s.method,
+                status: 'Registrado',
+                total: s.total,
+                items: s.items || []
+            });
+        }
     });
 
-    // Facturas de Compras / Proveedores
+    // 2. Procesar Compras y Abonos a Proveedores desde state.payables
     state.payables.forEach(p => {
         allInvoices.push({
             id: p.id,
@@ -2114,9 +2137,26 @@ function renderBillingModule() {
             total: p.total,
             items: p.items || []
         });
+
+        // Incluir abonos realizados a este proveedor
+        const paymentList = p.payments || p.paymentsHistory || [];
+        paymentList.forEach((pay, idx) => {
+            allInvoices.push({
+                id: `${p.id}_pay_${idx}`,
+                rawId: p.id,
+                code: `ABO-C-${p.id.toString().slice(-5)}-${idx}`,
+                type: 'ABONO',
+                date: pay.date,
+                party: p.providerName || 'Proveedor',
+                method: `Abono a Compra (${pay.account || 'Caja/Banco'})`,
+                status: 'Pagado',
+                total: pay.amount,
+                items: p.items || []
+            });
+        });
     });
 
-    // Filtros
+    // 3. Aplicar Filtros de Búsqueda y Tipo
     let filtered = allInvoices.filter(inv => {
         const matchesType = (typeFilter === 'ALL') || (inv.type === typeFilter);
         const matchesSearch = inv.code.toLowerCase().includes(search) || 
@@ -2128,15 +2168,21 @@ function renderBillingModule() {
     if (badge) badge.innerText = filtered.length;
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400 font-medium">No se encontraron facturas registradas.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400 font-medium">No se encontraron registros en el módulo de facturación.</td></tr>';
         return;
     }
 
+    // 4. Renderizar Filas en la Tabla
     filtered.forEach(inv => {
         const isVenta = inv.type === 'VENTA';
-        const typeBadge = isVenta 
-            ? '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-bold text-[10px]">VENTA</span>'
-            : '<span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md font-bold text-[10px]">COMPRA</span>';
+        const isCompra = inv.type === 'COMPRA';
+        
+        let typeBadge = '<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded-md font-bold text-[10px]">ABONO</span>';
+        if (isVenta) {
+            typeBadge = '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-bold text-[10px]">VENTA</span>';
+        } else if (isCompra) {
+            typeBadge = '<span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md font-bold text-[10px]">COMPRA</span>';
+        }
 
         tbody.innerHTML += `
             <tr class="hover:bg-slate-50 transition">
@@ -2149,31 +2195,28 @@ function renderBillingModule() {
                 <td class="p-3 md:p-4 text-slate-500">${inv.date}</td>
                 <td class="p-3 md:p-4 font-semibold text-slate-800">${inv.party}</td>
                 <td class="p-3 md:p-4">
-                    <span class="text-xs px-2 py-1 rounded-lg font-medium ${isVenta ? 'bg-slate-100 text-slate-700' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
+                    <span class="text-xs px-2 py-1 rounded-lg font-medium ${isVenta ? 'bg-slate-100 text-slate-700' : isCompra ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-purple-50 text-purple-800 border border-purple-200'}">
                         ${inv.method} (${inv.status})
                     </span>
                 </td>
                 <td class="p-3 md:p-4 font-bold text-right text-slate-900">${formatCOP(inv.total)}</td>
                 <td class="p-3 md:p-4 text-center space-x-1">
-                    <button onclick="openEditBillingModal(${inv.rawId}, '${inv.type}')" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition" title="Editar Factura">
-                        <i class="fa-solid fa-pen"></i>
-                    </button>
+                    ${inv.type !== 'ABONO' ? `
+                        <button onclick="openEditBillingModal(${inv.rawId}, '${inv.type}')" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                    ` : ''}
                     <button onclick="shareInvoiceWhatsApp('${inv.code}', '${inv.party}', ${inv.total}, '${inv.type}')" class="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg text-xs font-bold transition" title="Compartir WhatsApp">
                         <i class="fa-brands fa-whatsapp text-sm"></i>
-                    </button>
-                    <button onclick="deleteBillingInvoice(${inv.rawId}, '${inv.type}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition" title="Eliminar Factura">
-                        <i class="fa-solid fa-trash"></i>
                     </button>
                 </td>
             </tr>
         `;
     });
 }
-// Función para compartir factura con diseño profesional por WhatsApp
 function shareInvoiceWhatsApp(code, party, total, type) {
     let items = [], date = new Date().toLocaleDateString();
 
-    // 1. Obtener la venta o compra del estado global
     if (type === 'VENTA') {
         const sale = state.sales.find(s => `FAC-V-${s.id.toString().slice(-5)}` === code || s.id.toString() === code);
         if (sale) {
@@ -2186,23 +2229,60 @@ function shareInvoiceWhatsApp(code, party, total, type) {
             items = payable.items || [];
             date = payable.date || date;
         }
+    } else if (type === 'ABONO') {
+        const sale = state.sales.find(s => `ABO-V-${s.id.toString().slice(-5)}` === code || s.id.toString() === code);
+        if (sale) {
+            items = sale.items || [];
+            date = sale.date || date;
+        }
+
+        let msg = `=====================================\n`;
+        msg += `       *COMPROBANTE DE ABONO*\n`;
+        msg += `=====================================\n\n`;
+        msg += `📌 *N° Comprobante:* \`${code}\`\n`;
+        msg += `📅 *Fecha / Hora:* ${date}\n`;
+        msg += `👤 *Cliente:* ${party}\n\n`;
+
+        msg += `📋 *DETALLE DEL MOVIMIENTO*\n`;
+        msg += `-------------------------------------------------\n`;
+        if (items && items.length > 0) {
+            items.forEach((item, index) => {
+                const subtotal = item.price * item.qty;
+                msg += `*${index + 1}. ${item.name}*\n`;
+                msg += `   └ *Monto:* ${formatCOP(subtotal)}\n\n`;
+            });
+        } else {
+            msg += `• Abono registrado a cuenta de crédito\n\n`;
+        }
+        msg += `-------------------------------------------------\n`;
+        msg += `💵 *MONTO ABONADO:* *${formatCOP(total)}*\n\n`;
+
+        const client = state.clients.find(c => c.name.toLowerCase() === party.toLowerCase());
+        if (client) {
+            msg += `📊 *ESTADO DE CARTERA ACTUAL*\n`;
+            msg += `• Saldo Pendiente Actual: *${formatCOP(client.debt || 0)}*\n\n`;
+        }
+
+        msg += `=====================================\n`;
+        msg += `🙏 *¡Muchas gracias por su abono y puntualidad!*\n`;
+        msg += `🏢 *POS Master* • _Sistema de Gestión_`;
+
+        const encoded = encodeURIComponent(msg);
+        window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+        return;
     }
 
     const isSale = (type === 'VENTA');
     const headerTitle = isSale ? "COMPROBANTE DE VENTA" : "COMPROBANTE DE COMPRA";
     const labelParty = isSale ? "Cliente" : "Proveedor";
 
-    // 2. Encabezado Elegante y Profesional
     let msg = `=================================\n`;
     msg += `🧾 *${headerTitle}*\n`;
     msg += `=================================\n\n`;
-    
-    // 3. Información del Comprobante
     msg += `📌 *N° Factura:* \`${code}\` \n`;
     msg += `📅 *Fecha:* ${date}\n`;
     msg += `👤 *${labelParty}:* ${party}\n\n`;
 
-    // 4. Detalle de Artículos Estructurado
     msg += `📋 *RESUMEN DE PRODUCTOS*\n`;
     msg += `-------------------------------------------------\n`;
 
@@ -2221,15 +2301,44 @@ function shareInvoiceWhatsApp(code, party, total, type) {
         msg += `-------------------------------------------------\n\n`;
     }
 
-    // 5. Total Destacado y Pie de Página
     msg += `💳 *TOTAL A PAGAR:* *${formatCOP(total)}*\n\n`;
     msg += `=================================\n`;
     msg += `✨ _¡Gracias por su confianza!_\n`;
     msg += `🏢 *POS Master* • _Sistema de Gestión_`;
 
-    // 6. Enviar a WhatsApp
     const encoded = encodeURIComponent(msg);
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+}
+
+function sendPaymentReceiptWhatsApp(client, amountPaid, previousDebt, remainingDebt, accountName) {
+    const today = new Date().toLocaleString();
+
+    let msg = `=====================================\n`;
+    msg += `       *COMPROBANTE DE ABONO*\n`;
+    msg += `=====================================\n\n`;
+    msg += `👋 Estimado(a) *${client.name}*,\n\n`;
+    msg += `Le informamos que hemos registrado exitosamente su abono. A continuación el detalle de la transacción[cite: 11]:\n\n`;
+    msg += `📅 *Fecha y Hora:* ${today}\n`;
+    msg += `💵 *Monto Abonado:* *${formatCOP(amountPaid)}*\n`;
+    msg += `💳 *Método de Pago / Cuenta:* ${accountName}\n\n`;
+    msg += `--- *RESUMEN DE CUENTA* ---\n`;
+    msg += `🔴 Saldo Anterior: ${formatCOP(previousDebt)}\n`;
+    msg += `🟢 Saldo Actual Pendiente: *${formatCOP(remainingDebt)}*\n\n`;
+
+    if (remainingDebt <= 0) {
+        msg += `🎉 ¡Felicidades! Su cuenta se encuentra completamente a PAZ Y SALVO.\n\n`;
+    } else {
+        msg += `📌 ¡Agradecemos su puntualidad y confianza!\n\n`;
+    }
+
+    msg += `=====================================\n`;
+    msg += `🏢 *POS Master* • _Sistema de Gestión Profesional_`;
+
+    let phone = client.phone ? client.phone.replace(/\D/g, '') : '';
+    const encoded = encodeURIComponent(msg);
+    const url = phone.length >= 7 ? `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}` : `https://api.whatsapp.com/send?text=${encoded}`;
+
+    window.open(url, '_blank');
 }
 
         // --- POS & CARRITO ---
@@ -4252,7 +4361,7 @@ function renderStatistics() {
     }
 
     // ==========================================
-    // 5. GRÁFICO 4: TOP 5 ARTÍCULOS MÁS VENDIDOS (Barras Horizontales)
+    // 5. GRÁFICO 4: TOP 5 MAYOR ACTIVIDAD(Barras Horizontales)
     // ==========================================
     const ctxTopProducts = document.getElementById('chartTopProducts');
     if (ctxTopProducts) {
@@ -4297,7 +4406,7 @@ function renderStatistics() {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return ' Cantidad vendida: ' + context.raw + ' unidades';
+                                return ' ACTIVIDAD RECIENTE: ' + context.raw + ' ';
                             }
                         }
                     }
@@ -4315,26 +4424,6 @@ function renderStatistics() {
             }
         });
     }
-}
-
-// Función auxiliar opcional para descargar el reporte operativo diario y enviarlo por WhatsApp
-function downloadAndSendDailyReport() {
-    const totalEfectivo = state.accounts.filter(a => a.type === 'Efectivo').reduce((sum, a) => sum + (a.balance || 0), 0);
-    const totalBancos = state.accounts.filter(a => a.type === 'Banco').reduce((sum, a) => sum + (a.balance || 0), 0);
-    const totalCartera = state.clients.reduce((sum, c) => sum + (c.debt || 0), 0);
-    const totalPayables = state.payables.reduce((sum, p) => sum + (p.balance || 0), 0);
-
-    let msg = `📊 *REPORTE OPERATIVO DIARIO - POS MASTER*\n`;
-    msg += `📅 *Fecha:* ${new Date().toLocaleDateString()}\n\n`;
-    msg += `💰 *Efectivo en Cajas:* ${formatCOP(totalEfectivo)}\n`;
-    msg += `🏦 *Saldos en Bancos:* ${formatCOP(totalBancos)}\n`;
-    msg += `🤝 *Cartera por Cobrar:* ${formatCOP(totalCartera)}\n`;
-    msg += `📉 *Cuentas por Pagar:* ${formatCOP(totalPayables)}\n`;
-    msg += `🛒 *Total Transacciones:* ${state.sales.length}\n\n`;
-    msg += `_Generado automáticamente por el Sistema POS Profesional._`;
-
-    const encoded = encodeURIComponent(msg);
-    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
 }
 
         function renderCharts() {
@@ -4427,35 +4516,83 @@ function downloadAndSendDailyReport() {
                 }
             });
         }
+function downloadAndSendDailyReport() {
+    const today = new Date().toLocaleDateString();
+    const todaySales = state.sales.filter(s => s.date && s.date.includes(today));
 
-        function downloadAndSendDailyReport() {
-            const today = new Date().toLocaleDateString();
-            const todaySales = state.sales.filter(s => s.date.includes(today));
-            const total = todaySales.reduce((sum, s) => sum + s.total, 0);
+    // Separar abonos de las ventas de productos del día
+    const abonosToday = todaySales.filter(s => s.method && (s.method.includes('Abono') || s.method === 'Abono a Crédito'));
+    const totalAbonos = abonosToday.reduce((sum, s) => sum + (s.total || 0), 0);
 
-            let doc = `=====================================\n`;
-            doc += `      REPORTE DIARIO DE OPERACIONES   \n`;
-            doc += `=====================================\n`;
-            doc += `Fecha: ${today}\n`;
-            doc += `Total Ventas del Día: ${formatCOP(total)}\n`;
-            doc += `Total Transacciones: ${todaySales.length}\n\n`;
-            doc += `--- DETALLE DE VENTAS ---\n`;
+    const productSales = todaySales.filter(s => !s.method || (!s.method.includes('Abono') && s.method !== 'Abono a Crédito'));
+    const totalTodaySales = productSales.reduce((sum, s) => sum + (s.total || 0), 0);
 
-            todaySales.forEach(s => {
-                doc += `• [${s.method}] ${s.clientName}: ${formatCOP(s.total)}\n`;
-            });
+    // Desglose por método de pago de las ventas del día
+    const cashSales = productSales.filter(s => s.method === 'Efectivo').reduce((sum, s) => sum + s.total, 0);
+    const transfSales = productSales.filter(s => s.method === 'Transferencia').reduce((sum, s) => sum + s.total, 0);
+    const creditSales = productSales.filter(s => s.method === 'Crédito' || s.method.startsWith('Crédito')).reduce((sum, s) => sum + s.total, 0);
 
-            doc += `\n=====================================\n`;
+    // Totales globales actuales
+    const totalEfectivo = state.accounts.filter(a => a.type === 'Efectivo').reduce((sum, a) => sum + (a.balance || 0), 0);
+    const totalBancos = state.accounts.filter(a => a.type === 'Banco').reduce((sum, a) => sum + (a.balance || 0), 0);
+    const totalCartera = state.clients.reduce((sum, c) => sum + (c.debt || 0), 0);
+    const totalPayables = state.payables.reduce((sum, p) => sum + (Math.max(0, p.total - (p.paid || 0))), 0);
+    
+    // Balance General Neto ((Efectivo + Bancos + Cartera) - Cuentas por Pagar)
+    const balanceGeneral = (totalEfectivo + totalBancos + totalCartera) - totalPayables;
 
-            const blob = new Blob([doc], { type: 'text/plain;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `Reporte_Diario_${today.replace(/\//g, '-')}.txt`;
-            link.click();
+    // Construcción del documento de texto descargable con detalle completo
+    let doc = `=====================================\n`;
+    doc += `   REPORTE DIARIO DE OPERACIONES     \n`;
+    doc += `=====================================\n`;
+    doc += `Fecha: ${today}\n\n`;
+    doc += `--- RESUMEN DE VENTAS DE HOY ---\n`;
+    doc += `• Total de Ventas: ${formatCOP(totalTodaySales)}\n`;
+    doc += `• Ventas en Efectivo: ${formatCOP(cashSales)}\n`;
+    doc += `• Ventas Transferencias: ${formatCOP(transfSales)}\n`;
+    doc += `• Ventas a Crédito: ${formatCOP(creditSales)}\n`;
+    doc += `• Total de Abonos: ${formatCOP(totalAbonos)}\n`;
+    doc += `• Total Transacciones: ${todaySales.length}\n\n`;
 
-            const encoded = encodeURIComponent(`📊 *REPORTE DIARIO DE VENTAS (${today})*\n💰 *Total:* ${formatCOP(total)}\n🧾 *Transacciones:* ${todaySales.length}`);
-            window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
-        }
+    doc += `--- ESTADO FINANCIERO GENERAL ---\n`;
+    doc += `• Total Efectivo: ${formatCOP(totalEfectivo)}\n`;
+    doc += `• Total Bancos: ${formatCOP(totalBancos)}\n`;
+    doc += `• Total Cartera (Cuentas por Cobrar): ${formatCOP(totalCartera)}\n`;
+    doc += `• Total Cuentas por Pagar: ${formatCOP(totalPayables)}\n`;
+    doc += `• Balance General Neto: ${formatCOP(balanceGeneral)}\n`;
+    doc += `=====================================\n`;
+
+    // Descarga automática del archivo .txt
+    const blob = new Blob([doc], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Reporte_Diario_${today.replace(/\//g, '-')}.txt`;
+    link.click();
+
+    // Construcción del mensaje profesional y completo para WhatsApp
+    let msg = `📊 *REPORTE DIARIO DE OPERACIONES*\n`;
+    msg += `📅 *Fecha:* ${today}\n\n`;
+    
+    msg += `💵 *RESUMEN DE VENTAS DEL DÍA*\n`;
+    msg += `• *Total de Ventas:* ${formatCOP(totalTodaySales)}\n`;
+    msg += `• Ventas en Efectivo: ${formatCOP(cashSales)}\n`;
+    msg += `• Ventas Transferencias: ${formatCOP(transfSales)}\n`;
+    msg += `• Ventas a Crédito: ${formatCOP(creditSales)}\n`;
+    msg += `• Total de Abonos: ${formatCOP(totalAbonos)}\n`;
+    msg += `• Total Transacciones del Día: ${todaySales.length}\n\n`;
+
+    msg += `🏦 *ESTADO FINANCIERO Y PATRIMONIAL*\n`;
+    msg += `• Total Efectivo: ${formatCOP(totalEfectivo)}\n`;
+    msg += `• Total Bancos: ${formatCOP(totalBancos)}\n`;
+    msg += `• Total Cartera / Cuentas por Cobrar: ${formatCOP(totalCartera)}\n`;
+    msg += `• Total Cuentas por Pagar: ${formatCOP(totalPayables)}\n`;
+    msg += `• *Balance General:* *${formatCOP(balanceGeneral)}*\n\n`;
+
+    msg += `✨ _Generado por POS Master_`;
+
+    const encoded = encodeURIComponent(msg);
+    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+}
 
         // --- REPORTES Y TABLA DE VENTAS ---
         function renderReports() {
@@ -5368,32 +5505,46 @@ function closeQuickProductModal() {
     </div>
 </div>
 
-<!-- TICKET TÉRMICO OCULTO PARA IMPRESIÓN 80MM -->
-<div id="thermal-ticket" class="hidden">
-    <div style="text-align: center; margin-bottom: 8px;">
-        <h2 style="font-size: 14px; font-weight: bold; margin: 0;">BRAMY PARFUMS</h2>
-        <p style="margin: 2px 0; font-size: 10px;">NIT: 900.123.456-1</p>
-        <p style="margin: 2px 0; font-size: 10px;">Régimen Simplificado</p>
-        <p style="margin: 2px 0; font-size: 9px;" id="ticket-date"></p>
-        <p style="margin: 2px 0; font-size: 9px;" id="ticket-client"></p>
+<!-- TICKET TÉRMICO PROFESIONAL 80MM -->
+<div id="thermal-ticket" class="hidden" style="width: 80mm; font-family: 'Courier New', Courier, monospace; font-size: 11px; color: #000; background: #fff; padding: 8px; box-sizing: border-box;">
+    <div style="text-align: center; margin-bottom: 10px;">
+        <h2 style="font-size: 15px; font-weight: bold; margin: 0; text-transform: uppercase;">BRAMY PARFUMS</h2>
+               <p style="margin: 2px 0; font-size: 10px;">Régimen Simplificado</p>
+        <p style="margin: 2px 0; font-size: 10px;">Tel: 3217088014</p>
+        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+        <p style="margin: 2px 0; font-size: 11px; font-weight: bold;" id="ticket-invoice-num">FACTURA DE VENTA: FAC-00000</p>
+        <p style="margin: 2px 0; font-size: 10px;" id="ticket-date"></p>
+        <p style="margin: 2px 0; font-size: 10px;" id="ticket-client"></p>
+        <p style="margin: 2px 0; font-size: 10px;" id="ticket-payment-method"></p>
     </div>
-    <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 4px 0; margin-bottom: 6px;">
-        <table style="width: 100%; font-size: 10px;">
+    
+    <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 6px 0; margin-bottom: 6px;">
+        <table style="width: 100%; font-size: 10px; border-collapse: collapse;">
             <thead>
-                <tr>
-                    <th style="text-align: left;">Cant / Descrip</th>
-                    <th style="text-align: right;">Total</th>
+                <tr style="border-bottom: 1px dashed #000;">
+                    <th style="text-align: left; padding-bottom: 3px;">CANT / DESCRIPCIÓN</th>
+                    <th style="text-align: right; padding-bottom: 3px;">TOTAL</th>
                 </tr>
             </thead>
             <tbody id="ticket-items-body"></tbody>
         </table>
     </div>
-    <div style="text-align: right; font-size: 11px; font-weight: bold; margin-bottom: 8px;">
-        <p style="margin: 2px 0;">TOTAL: <span id="ticket-total">$0.000</span></p>
+
+    <div style="font-size: 11px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+            <span>Subtotal:</span>
+            <span id="ticket-subtotal">$0.000</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-weight: bold; font-size: 13px; border-top: 1px solid #000; padding-top: 4px;">
+            <span>TOTAL A PAGAR:</span>
+            <span id="ticket-total">$0.000</span>
+        </div>
     </div>
-    <div style="text-align: center; font-size: 9px; margin-top: 8px; border-top: 1px dashed #000; pt-1;">
-        <p style="margin: 2px 0;">¡Gracias por su compra!</p>
-        <p style="margin: 2px 0;">Conserve este tiquete para cambios o garantía</p>
+
+    <div style="text-align: center; font-size: 10px; margin-top: 10px; border-top: 1px dashed #000; padding-top: 6px;">
+        <p style="margin: 2px 0; font-weight: bold;">¡GRACIAS POR SU COMPRA!</p>
+        <p style="margin: 2px 0; font-size: 9px;">Conserve este tiquete para cambios o garantía.</p>
+        <p style="margin: 4px 0 0 0; font-size: 8px; font-family: monospace;">* * * * * * * * * * * * * * * * * * * *</p>
     </div>
 </div>
 <!-- MODAL EDICIÓN COMPLETA DE FACTURA CON ARTÍCULOS -->
