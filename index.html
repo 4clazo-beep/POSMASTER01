@@ -4,7 +4,6 @@
  <!-- SDK de Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
 <script>
  const firebaseConfig = {
   apiKey: "AIzaSyD7mc5dbKm8yc5hmum8VJuCDrxR_wTeRpY",
@@ -17,19 +16,26 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  // --- ESTADO GLOBAL DE LA APLICACIÓN ---
+ // --- ESTADO GLOBAL FIJO (INMUTABLE AL REFRESCAR) ---
 let state = {
-    products: JSON.parse(localStorage.getItem('pos_products')) || [],
-    sales: JSON.parse(localStorage.getItem('pos_sales')) || [],
-    clients: JSON.parse(localStorage.getItem('pos_clients')) || [],
-    accounts: JSON.parse(localStorage.getItem('pos_accounts')) || [
-        { id: 1, name: 'Caja General', type: 'Efectivo', balance: 0 },
-        { id: 2, name: 'Bancolombia', type: 'Banco', balance: 0 }
+    products: [
+        { id: 1, name: "Producto Inicial 1", category: "General", price: 10000, stock: 50, barcode: "770001" },
+        { id: 2, name: "Producto Inicial 2", category: "General", price: 20000, stock: 30, barcode: "770002" }
     ],
-    providers: JSON.parse(localStorage.getItem('pos_providers')) || [],
-    payables: JSON.parse(localStorage.getItem('pos_payables')) || [],
-    cashRegister: JSON.parse(localStorage.getItem('pos_cash')) || { isOpen: false, initialAmount: 0, openTime: null, startTimeStamp: null },
-    cashHistory: JSON.parse(localStorage.getItem('pos_cash_history')) || [],
+    sales: [],
+    clients: [
+        { id: 1, name: "Cliente General", phone: "3000000000", debt: 0 }
+    ],
+    accounts: [
+        { id: 1, name: 'Caja General', type: 'Efectivo', balance: 100000 },
+        { id: 2, name: 'Bancolombia', type: 'Banco', balance: 500000 }
+    ],
+    providers: [
+        { id: 1, name: "Proveedor Principal", phone: "3100000000" }
+    ],
+    payables: [],
+    cashRegister: { isOpen: true, initialAmount: 100000, openTime: "Inicio Fijo", startTimeStamp: Date.now() },
+    cashHistory: [],
     cart: []
 };
 </script>
@@ -639,6 +645,15 @@ let state = {
                 <button onclick="switchTab('payables')" id="btn-payables" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition">
                     <i class="fa-solid fa-file-invoice-dollar w-5"></i> Cuentas por Pagar
                 </button>
+                <!-- En el menú lateral de escritorio (aside > nav) -->
+<button onclick="switchTab('treasury')" id="btn-treasury" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition">
+    <i class="fa-solid fa-vault w-5 text-amber-400"></i> Tesorería
+</button>
+
+<!-- En el menú flotante móvil (#mobile-more-menu) -->
+<button onclick="switchTab('treasury'); toggleMobileMoreMenu();" id="mob-btn-treasury" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 font-medium text-xs active:bg-emerald-50">
+    <i class="fa-solid fa-vault text-amber-500 text-base"></i> Tesorería
+</button>
                 <button onclick="switchTab('clients')" id="btn-clients" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition">
                     <i class="fa-solid fa-users w-5"></i> Clientes & Crédito
                 </button>
@@ -782,6 +797,96 @@ let state = {
 
             <!-- Contenedor de Vistas -->
             <div class="p-3 md:p-6 flex-1">
+                <!-- VISTA: TESORERÍA (NÓMINA Y CAJA MENOR) -->
+<section id="view-treasury" class="hidden space-y-4 md:space-y-6">
+    <!-- BANNER DE ENCABEZADO -->
+    <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+            <h2 class="text-base md:text-lg font-bold text-slate-800">Módulo de Tesorería & Egresos</h2>
+            <p class="text-xs text-slate-500">Registro y control de Pagos de Nómina y Gastos de Caja Menor.</p>
+        </div>
+        <div class="flex gap-2 w-full md:w-auto">
+            <button onclick="openTreasuryModal('NOMINA')" class="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-xl text-xs md:text-sm transition shadow-sm">
+                <i class="fa-solid fa-user-check mr-1.5"></i> Pago de Nómina
+            </button>
+            <button onclick="openTreasuryModal('CAJA_MENOR')" class="flex-1 md:flex-none bg-amber-600 hover:bg-amber-700 text-white font-semibold px-4 py-2 rounded-xl text-xs md:text-sm transition shadow-sm">
+                <i class="fa-solid fa-receipt mr-1.5"></i> Gasto Caja Menor
+            </button>
+        </div>
+    </div>
+
+    <!-- TARJETAS DE RESUMEN -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-l-4 border-indigo-600 bg-indigo-50/20">
+            <p class="text-[10px] md:text-xs text-indigo-700 font-bold uppercase flex items-center gap-1.5">
+                <i class="fa-solid fa-users text-sm"></i> Total Pago de Nómina
+            </p>
+            <h3 id="treasury-total-payroll" class="text-lg md:text-2xl font-bold text-indigo-900 mt-1">$0.000</h3>
+        </div>
+        <div class="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-l-4 border-amber-500 bg-amber-50/20">
+            <p class="text-[10px] md:text-xs text-amber-700 font-bold uppercase flex items-center gap-1.5">
+                <i class="fa-solid fa-box-open text-sm"></i> Total Gastos Caja Menor
+            </p>
+            <h3 id="treasury-total-pettycash" class="text-lg md:text-2xl font-bold text-amber-900 mt-1">$0.000</h3>
+        </div>
+    </div>
+
+    <!-- TABLA DE HISTORIAL DE EGRESOS DE TESORERÍA -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-x-auto border border-slate-100">
+        <table class="w-full text-left border-collapse min-w-[650px]">
+            <thead>
+                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase">
+                    <th class="p-3 md:p-4">Tipo / Categoría</th>
+                    <th class="p-3 md:p-4">Fecha</th>
+                    <th class="p-3 md:p-4">Beneficiario / Detalle</th>
+                    <th class="p-3 md:p-4">Cuenta Origen</th>
+                    <th class="p-3 md:p-4 text-right">Monto ($)</th>
+                    <th class="p-3 md:p-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="treasury-table-body" class="divide-y divide-slate-100 text-xs md:text-sm text-slate-700"></tbody>
+        </table>
+    </div>
+</section>
+
+<!-- MODAL PARA REGISTRO DE TESORERÍA -->
+<div id="treasury-modal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h3 id="treasury-modal-title" class="text-lg font-bold text-slate-800">Registrar Egreso</h3>
+            <button onclick="closeTreasuryModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <input type="hidden" id="treasury-type">
+
+        <div>
+            <label id="treasury-beneficiary-label" class="block text-xs font-semibold text-slate-500 uppercase mb-1">Nombre Empleado / Beneficiario</label>
+            <input type="text" id="treasury-beneficiary" placeholder="Ej. Juan Pérez" class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+        </div>
+
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Concepto / Descripción del Gasto</label>
+            <input type="text" id="treasury-description" placeholder="Ej. Pago Quincena / Compra Insumos Aseo" class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+        </div>
+
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Monto ($)</label>
+            <input type="number" id="treasury-amount" placeholder="0.000" class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-bold text-rose-600">
+        </div>
+
+        <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Cuenta de Salida (Descuenta del Saldo)</label>
+            <select id="treasury-account" class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-medium bg-slate-50"></select>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t">
+            <button onclick="closeTreasuryModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl transition text-xs font-medium">Cancelar</button>
+            <button onclick="saveTreasuryExpense()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition text-xs font-semibold shadow-md">Guardar Registro</button>
+        </div>
+    </div>
+</div>
                <!-- VISTA 9: FACTURACIÓN GENERAL -->
 <section id="view-billing" class="hidden space-y-4 md:space-y-6">
     <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
@@ -863,11 +968,16 @@ let state = {
                                 <span>Subtotal</span>
                                 <span id="cart-subtotal">$0.000</span>
                             </div>
-                            <div class="flex justify-between text-base md:text-lg font-bold text-slate-900">
-                                <span>Total a Pagar</span>
-                                <span id="cart-total" class="text-emerald-600">$0.000</span>
-                            </div>
-                            <div>
+                            <!-- NUEVA SECCIÓN DE DESCUENTO -->
+    <div class="flex justify-between items-center text-xs md:text-sm text-slate-600">
+        <span>Descuento ($)</span>
+        <input type="number" id="cart-discount" value="0" min="0" oninput="updateCartDiscount(this.value)" class="w-28 px-2 py-1 text-xs border rounded-lg text-right font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+    </div>
+    <div class="flex justify-between text-base md:text-lg font-bold text-slate-900">
+        <span>Total a Pagar</span>
+        <span id="cart-total" class="text-emerald-600">$0.000</span>
+    </div>
+                           
                                 <label class="block text-[10px] md:text-xs font-semibold text-slate-500 uppercase mb-1">Cuenta / Método de Pago</label>
                                 <select id="checkout-account" class="w-full px-3 py-1.5 md:py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-xs md:text-sm font-medium bg-slate-50"></select>
                             </div>
@@ -933,19 +1043,20 @@ let state = {
             <i class="fa-solid fa-plus mr-2"></i> Nuevo Producto
         </button>
     </div>
-    <div class="bg-white rounded-2xl shadow-sm overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[600px]">
-            <thead>
-                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase">
-                    <th class="p-3 md:p-4">Artículo</th>
-                    <th class="p-3 md:p-4">Precio de Venta ($)</th>
-                    <th class="p-3 md:p-4">Stock Disponible</th>
-                    <th class="p-3 md:p-4 text-right">Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="inventory-table-body" class="divide-y divide-slate-100 text-xs md:text-sm text-slate-700"></tbody>
-        </table>
-    </div>
+   <div class="bg-white rounded-2xl shadow-sm overflow-x-auto">
+    <table class="w-full text-left border-collapse min-w-[600px]">
+        <thead>
+            <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs font-bold uppercase">
+                <th class="p-3 md:p-4">Artículo</th>
+                <th class="p-3 md:p-4">Categoría</th> <!-- 👈 NUEVA COLUMNA -->
+                <th class="p-3 md:p-4">Precio de Venta ($)</th>
+                <th class="p-3 md:p-4">Stock Disponible</th>
+                <th class="p-3 md:p-4 text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="inventory-table-body" class="divide-y divide-slate-100 text-xs md:text-sm text-slate-700"></tbody>
+    </table>
+</div>
 </section>
 
                 <!-- VISTA 3: CAJA Y CIERRE -->
@@ -1051,6 +1162,48 @@ let state = {
             <h3 id="clients-total-cartera-badge" class="text-lg md:text-2xl font-bold text-purple-900 mt-1">$0.000</h3>
         </div>
     </div>
+    <!-- TARJETAS INDIVIDUALES DE CLIENTES Y DEUDA -->
+    <div id="client-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4"></div>
+    <!-- PANEL DE CLIENTES FRECUENTES Y DE MAYOR COMPRA -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mt-4">
+        <!-- Panel: Clientes Más Frecuentes -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-slate-100 flex flex-col">
+            <h3 class="text-sm md:text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-ranking-star text-emerald-600"></i> Clientes Más Frecuentes (Por N° de Compras)
+            </h3>
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 font-bold uppercase border-b">
+                            <th class="p-2.5">Cliente</th>
+                            <th class="p-2.5 text-center">N° Compras</th>
+                            <th class="p-2.5 text-right">Total Acumulado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-frequent-clients-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Panel: Clientes con Mayor Volumen de Compra -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-slate-100 flex flex-col">
+            <h3 class="text-sm md:text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
+                <span class="text-amber-500"><i class="fa-solid fa-crown"></i></span> Clientes que Más Compran (Por Volumen $)
+            </h3>
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 font-bold uppercase border-b">
+                            <th class="p-2.5">Cliente</th>
+                            <th class="p-2.5 text-center">N° Compras</th>
+                            <th class="p-2.5 text-right">Total Comprado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-volume-clients-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <div class="bg-white rounded-2xl shadow-sm overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[500px]">
@@ -1092,6 +1245,46 @@ let state = {
         <div class="bg-white p-3 md:p-5 rounded-2xl shadow-sm border-l-4 border-amber-500">
             <p class="text-[10px] md:text-xs text-slate-500 font-semibold uppercase">Transacciones</p>
             <h3 id="stat-total-trans" class="text-base md:text-xl font-bold text-slate-800 mt-1">0</h3>
+        </div>
+    </div>
+    <!-- PANEL ANALÍTICO DE PRODUCTOS (MÓDULO POS Y VENTAS) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mt-6">
+        <!-- Panel: Productos Más Frecuentes -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-slate-100 flex flex-col">
+            <h3 class="text-sm md:text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
+                <i class="fa-solid fa-boxes-stacked text-emerald-600"></i> Productos Más Frecuentes (Por Unidades Vendidas)
+            </h3>
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 font-bold uppercase border-b">
+                            <th class="p-2.5">Artículo / Producto</th>
+                            <th class="p-2.5 text-center">Cant. Vendida</th>
+                            <th class="p-2.5 text-right">Total Recaudado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-frequent-products-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Panel: Productos con Mayor Volumen de Venta ($) -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-slate-100 flex flex-col">
+            <h3 class="text-sm md:text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
+                <span class="text-amber-500"><i class="fa-solid fa-trophy"></i></span> Productos que Más Dinero Generan (Volumen $)
+            </h3>
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 font-bold uppercase border-b">
+                            <th class="p-2.5">Artículo / Producto</th>
+                            <th class="p-2.5 text-center">Cant. Vendida</th>
+                            <th class="p-2.5 text-right">Total Recaudado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-volume-products-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -2341,34 +2534,64 @@ function sendPaymentReceiptWhatsApp(client, amountPaid, previousDebt, remainingD
     window.open(url, '_blank');
 }
 
-        // --- POS & CARRITO ---
-        function renderPOSProducts(filter = '') {
+    function renderPOSProducts(filter = '') {
             const grid = document.getElementById('pos-product-grid');
             if (!grid) return;
             grid.innerHTML = '';
-            const filtered = state.products.filter(p => p.stock > 0 && (p.name.toLowerCase().includes(filter.toLowerCase()) || p.category.toLowerCase().includes(filter.toLowerCase())));
+            const filtered = state.products.filter(p => p.stock > 0 && (p.name.toLowerCase().includes(filter.toLowerCase()) || (p.category && p.category.toLowerCase().includes(filter.toLowerCase()))));
             
             if (filtered.length === 0) {
                 grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-8 text-xs md:text-sm font-medium">No hay productos disponibles con stock.</div>';
                 return;
             }
 
+            // Agrupar unificando variantes de nombres (mayúsculas/minúsculas/espacios)
+            const grouped = {};
+            const categoryDisplayNames = {}; // Guarda la versión bien formateada para mostrar
+
             filtered.forEach(p => {
+                const rawCat = (p.category && p.category.trim()) ? p.category.trim() : 'General';
+                // Llave normalizada en minúsculas para unificar variantes
+                const key = rawCat.toLowerCase();
+
+                if (!grouped[key]) {
+                    grouped[key] = [];
+                    categoryDisplayNames[key] = rawCat.toUpperCase(); // Nombre unificado en mayúsculas
+                }
+                grouped[key].push(p);
+            });
+
+            // Ordenar las categorías alfabéticamente
+            const sortedKeys = Object.keys(grouped).sort((a, b) => categoryDisplayNames[a].localeCompare(categoryDisplayNames[b]));
+
+            // Renderizar cada grupo unificado con su divisor de categoría
+            sortedKeys.forEach(key => {
+                const displayName = categoryDisplayNames[key];
+
                 grid.innerHTML += `
-                    <div onclick="addToCart(${p.id})" class="bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 p-2.5 md:p-4 rounded-xl cursor-pointer transition flex flex-col justify-between active:scale-95">
-                        <div>
-                            <span class="text-[10px] font-semibold text-emerald-600 uppercase block">${p.category}</span>
-                            <h4 class="font-bold text-slate-800 text-xs md:text-sm mt-0.5 line-clamp-2">${p.name}</h4>
-                        </div>
-                        <div class="flex justify-between items-center mt-2 pt-1 border-t border-slate-100">
-                            <span class="font-bold text-slate-900 text-xs md:text-sm">${formatCOP(p.price)}</span>
-                            <span class="text-[10px] md:text-xs text-slate-500">Stock: ${p.stock}</span>
-                        </div>
+                    <div class="col-span-full mt-3 mb-1 first:mt-0">
+                        <h3 class="text-xs md:text-sm font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider border-b-2 border-emerald-300 dark:border-slate-700 pb-1 flex items-center gap-1.5 bg-emerald-50/60 dark:bg-slate-800/50 px-2 py-1 rounded-lg">
+                            <i class="fa-solid fa-layer-group text-xs text-emerald-600"></i> ${displayName} (${grouped[key].length})
+                        </h3>
                     </div>
                 `;
+
+                grouped[key].forEach(p => {
+                    grid.innerHTML += `
+                        <div onclick="addToCart(${p.id})" class="bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 p-2.5 md:p-4 rounded-xl cursor-pointer transition flex flex-col justify-between active:scale-95">
+                            <div>
+                                <span class="text-[10px] font-semibold text-emerald-600 uppercase block">${p.category || 'General'}</span>
+                                <h4 class="font-bold text-slate-800 text-xs md:text-sm mt-0.5 line-clamp-2">${p.name}</h4>
+                            </div>
+                            <div class="flex justify-between items-center mt-2 pt-1 border-t border-slate-100">
+                                <span class="font-bold text-slate-900 text-xs md:text-sm">${formatCOP(p.price)}</span>
+                                <span class="text-[10px] md:text-xs text-slate-500">Stock: ${p.stock}</span>
+                            </div>
+                        </div>
+                    `;
+                });
             });
         }
-
         function filterPOSProducts() {
             renderPOSProducts(document.getElementById('pos-search').value);
         }
@@ -2378,9 +2601,9 @@ function sendPaymentReceiptWhatsApp(client, amountPaid, previousDebt, remainingD
 // ==========================================
 
 let multiCarts = [
-    { id: 1, name: 'Cliente 1', clientName: '', clientPhone: '', items: [] },
-    { id: 2, name: 'Cliente 2', clientName: '', clientPhone: '', items: [] },
-    { id: 3, name: 'Cliente 3', clientName: '', clientPhone: '', items: [] }
+    { id: 1, name: 'Cliente 1', clientName: '', clientPhone: '', discount: 0, items: [] },
+    { id: 2, name: 'Cliente 2', clientName: '', clientPhone: '', discount: 0, items: [] },
+    { id: 3, name: 'Cliente 3', clientName: '', clientPhone: '', discount: 0, items: [] }
 ];
 let activeCartId = 1;
 
@@ -2497,6 +2720,13 @@ function renderCart() {
         };
     }
 
+    if (activeCart.discount === undefined) activeCart.discount = 0;
+
+    const discountInput = document.getElementById('cart-discount');
+    if (discountInput && document.activeElement !== discountInput) {
+        discountInput.value = activeCart.discount;
+    }
+
     if (activeCart.items.length === 0) {
         container.innerHTML = '<p class="text-center text-slate-400 py-6 text-xs md:text-sm">Este carrito está vacío</p>';
     }
@@ -2511,13 +2741,13 @@ function renderCart() {
                 </div>
                 <div class="flex justify-between items-center">
                    <div class="flex items-center gap-1">
-    <span class="text-[10px] text-slate-400 font-bold">$</span>
-    <input type="number" 
-           value="${item.price}" 
-           oninput="updateCartItemPriceQuick(${item.id}, this.value)" 
-           onblur="updateCartItemPrice(${item.id}, this.value)" 
-           class="w-16 px-1.5 py-0.5 text-xs border rounded bg-white font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-</div>
+                        <span class="text-[10px] text-slate-400 font-bold">$</span>
+                        <input type="number" 
+                               value="${item.price}" 
+                               oninput="updateCartItemPriceQuick(${item.id}, this.value)" 
+                               onblur="updateCartItemPrice(${item.id}, this.value)" 
+                               class="w-16 px-1.5 py-0.5 text-xs border rounded bg-white font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                    </div>
                     <div class="flex items-center gap-2">
                         <button onclick="updateQty(${item.id}, -1)" class="w-6 h-6 bg-slate-200 hover:bg-slate-300 rounded-lg flex items-center justify-center text-xs font-bold">-</button>
                         <span class="text-xs font-bold w-4 text-center">${item.qty}</span>
@@ -2529,8 +2759,11 @@ function renderCart() {
         `;
     });
 
+    // Calcular el total restando el descuento de manera segura
+    const total = Math.max(0, subtotal - activeCart.discount);
+
     document.getElementById('cart-subtotal').innerText = formatCOP(subtotal);
-    document.getElementById('cart-total').innerText = formatCOP(subtotal);
+    document.getElementById('cart-total').innerText = formatCOP(total);
 
     state.cart = activeCart.items;
 }
@@ -2593,66 +2826,75 @@ function clearCart() {
     const activeCart = getActiveCart();
     activeCart.items = [];
     activeCart.clientName = '';
+    activeCart.discount = 0; // Reiniciar descuento
+    
+    const discountInput = document.getElementById('cart-discount');
+    if (discountInput) discountInput.value = 0;
+
     activeCart.name = `Cliente ${multiCarts.indexOf(activeCart) + 1}`;
     renderCartTabs();
     renderCart();
 }
+       function checkout(method) {
+    if (state.cart.length === 0) return alert('El carrito está vacío.');
+    if (!state.cashRegister.isOpen) return alert('Debes abrir la caja antes de registrar ventas.');
 
-        function checkout(method) {
-            if (state.cart.length === 0) return alert('El carrito está vacío.');
-            if (!state.cashRegister.isOpen) return alert('Debes abrir la caja antes de registrar ventas.');
+    const activeCart = getActiveCart();
+    const clientNameInput = document.getElementById('cart-client-name').value.trim();
+    const clientName = clientNameInput || 'Cliente Ocasional';
+    const accountId = parseInt(document.getElementById('checkout-account').value);
+    const account = state.accounts.find(a => a.id === accountId);
 
-            const clientNameInput = document.getElementById('cart-client-name').value.trim();
-            const clientName = clientNameInput || 'Cliente Ocasional';
-            const accountId = parseInt(document.getElementById('checkout-account').value);
-            const account = state.accounts.find(a => a.id === accountId);
+    if (!account && method !== 'Crédito') return alert('Selecciona una cuenta válida.');
 
-            if (!account && method !== 'Crédito') return alert('Selecciona una cuenta válida.');
+    const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const discount = activeCart.discount || 0;
+    const total = Math.max(0, subtotal - discount); // Total real con descuento aplicado
 
-            const total = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-
-            // MANEJO DE VENTA A CRÉDITO
-            if (method === 'Crédito') {
-                if (!clientNameInput || clientName === 'Cliente Ocasional') {
-                    return alert('Debes ingresar el nombre del cliente para registrar una venta a crédito.');
-                }
-                
-                let client = state.clients.find(c => c.name.toLowerCase() === clientName.toLowerCase());
-                if (!client) {
-                    client = { id: Date.now(), name: clientName, phone: 'Sin Teléfono', debt: total };
-                    state.clients.push(client);
-                } else {
-                    client.debt = (client.debt || 0) + total;
-                }
-            } else {
-                // Actualizar saldo de la cuenta receptora
-                account.balance += total;
-            }
-
-            // Descontar inventario solo en el momento de registrar la venta
-            state.cart.forEach(item => {
-                const product = state.products.find(p => p.id === item.id);
-                if (product) product.stock -= item.qty;
-            });
-
-            const newSale = {
-                id: Date.now(),
-                date: new Date().toLocaleString(),
-                clientName: clientName,
-                method: method,
-                account: method === 'Crédito' ? 'Cartera Crédito' : account.name,
-                total: total,
-                items: [...state.cart]
-            };
-
-            state.sales.unshift(newSale);
-            saveData();
-
-            alert(`Venta registrada exitosamente por ${formatCOP(total)}`);
-            clearCart();
-            document.getElementById('cart-client-name').value = '';
-            refreshAllUI();
+    // MANEJO DE VENTA A CRÉDITO
+    if (method === 'Crédito') {
+        if (!clientNameInput || clientName === 'Cliente Ocasional') {
+            return alert('Debes ingresar el nombre del cliente para registrar una venta a crédito.');
         }
+        
+        let client = state.clients.find(c => c.name.toLowerCase() === clientName.toLowerCase());
+        if (!client) {
+            client = { id: Date.now(), name: clientName, phone: 'Sin Teléfono', debt: total };
+            state.clients.push(client);
+        } else {
+            client.debt = (client.debt || 0) + total;
+        }
+    } else {
+        // Actualizar saldo de la cuenta receptora con el total real
+        account.balance += total;
+    }
+
+    // Descontar inventario solo en el momento de registrar la venta
+    state.cart.forEach(item => {
+        const product = state.products.find(p => p.id === item.id);
+        if (product) product.stock -= item.qty;
+    });
+
+    const newSale = {
+        id: Date.now(),
+        date: new Date().toLocaleString(),
+        clientName: clientName,
+        method: method,
+        account: method === 'Crédito' ? 'Cartera Crédito' : account.name,
+        subtotal: subtotal,
+        discount: discount,
+        total: total,
+        items: [...state.cart]
+    };
+
+    state.sales.unshift(newSale);
+    saveData();
+
+    alert(`Venta registrada exitosamente por ${formatCOP(total)} (Descuento aplicado: ${formatCOP(discount)})`);
+    clearCart();
+    document.getElementById('cart-client-name').value = '';
+    refreshAllUI();
+}
 
         // NUEVA FUNCIÓN: ENVIAR COTIZACIÓN POR WHATSAPP SIN DESCONTAR INVENTARIO
         function sendQuotationWhatsApp() {
@@ -2713,7 +2955,7 @@ function renderInventory() {
     const filtered = state.products.filter(p => p.name.toLowerCase().includes(filter) || (p.category && p.category.toLowerCase().includes(filter)));
 
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">No se encontraron productos en el inventario.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">No se encontraron productos en el inventario.</td></tr>';
         return;
     }
 
@@ -2722,7 +2964,10 @@ function renderInventory() {
             <tr class="hover:bg-slate-50 transition border-b border-slate-100">
                 <td class="p-3 md:p-4">
                     <div class="font-bold text-slate-800">${p.name}</div>
-                    <div class="text-[10px] text-slate-400 font-semibold uppercase">Cat: ${p.category || 'General'} | Cód: ${p.barcode || 'S/N'}</div>
+                    <div class="text-[10px] text-slate-400 font-semibold uppercase">Cód: ${p.barcode || 'S/N'}</div>
+                </td>
+                <td class="p-3 md:p-4">
+                    <input type="text" id="inv-category-${p.id}" value="${p.category || 'General'}" class="w-28 px-2 py-1 text-xs border rounded-lg font-semibold text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500">
                 </td>
                 <td class="p-3 md:p-4">
                     <div class="flex items-center gap-1">
@@ -2750,15 +2995,16 @@ function renderInventory() {
         `;
     });
 }
-// FUNCIÓN PARA GUARDAR LOS CAMBIOS EDITADOS DESDE LA TABLA DE INVENTARIO
 function saveInventoryInline(productId) {
     if (!state.cashRegister.isOpen) return alert('La caja está cerrada. No se pueden realizar modificaciones.');
 
+    const categoryInput = document.getElementById(`inv-category-${productId}`);
     const priceInput = document.getElementById(`inv-price-${productId}`);
     const stockInput = document.getElementById(`inv-stock-${productId}`);
 
-    if (!priceInput || !stockInput) return alert('No se pudieron leer los valores del producto.');
+    if (!categoryInput || !priceInput || !stockInput) return alert('No se pudieron leer los valores del producto.');
 
+    const newCategory = categoryInput.value.trim() || 'General';
     const newPrice = parseFloat(priceInput.value);
     const newStock = parseInt(stockInput.value);
 
@@ -2768,15 +3014,16 @@ function saveInventoryInline(productId) {
     const product = state.products.find(p => p.id === productId);
     if (!product) return alert('Producto no encontrado en el inventario.');
 
-    // Actualizar los datos del producto
+    // Actualizar los datos del producto (incluyendo la nueva categoría)
+    product.category = newCategory;
     product.price = newPrice;
     product.stock = newStock;
 
-    // Guardar cambios en el almacenamiento local y actualizar la interfaz (incluyendo el POS de Venta)
+    // Guardar cambios y actualizar la interfaz (el POS agrupará el artículo en su nueva categoría de inmediato)
     saveData();
     refreshAllUI();
 
-    alert(`¡Producto "${product.name}" actualizado con éxito!\nNuevo Stock en POS: ${newStock} unidades\nNuevo Precio: ${formatCOP(newPrice)}`);
+    alert(`¡Producto "${product.name}" actualizado con éxito!\nCategoría: ${newCategory}\nStock: ${newStock}\nPrecio: ${formatCOP(newPrice)}`);
 }
         function openProductModal(id = null) {
             document.getElementById('product-modal').classList.remove('hidden');
@@ -3847,7 +4094,8 @@ function updateInventoryFromEditedInvoice(oldItems, newItems) {
             document.getElementById('payable-history-modal').classList.add('hidden');
         }
 
- function submitPayablePayment() {
+ // --- HISTORIAL Y REGISTRO DE ABONOS CORREGIDOS ---
+function submitPayablePayment() {
     if (!state.cashRegister.isOpen) return alert('La caja está cerrada. No se pueden realizar modificaciones.');
     const invId = parseInt(document.getElementById('payable-inv-id').value);
     const amount = parseFloat(document.getElementById('payable-pay-amount').value);
@@ -3861,44 +4109,86 @@ function updateInventoryFromEditedInvoice(oldItems, newItems) {
     if (!payable || !account) return alert('Factura o cuenta inválida.');
     if (amount > account.balance) return alert('Saldo insuficiente en la cuenta seleccionada.');
 
-    // Obtener el saldo anterior de la factura de forma segura
     const previousBalance = payable.balance !== undefined ? payable.balance : (payable.total - (payable.paid || 0));
 
     if (amount > previousBalance) return alert('El abono excede el saldo pendiente de la factura.');
 
-    // 1. Restar el abono de la cuenta de origen
+    // Descontar saldo de la cuenta
     account.balance -= amount;
 
-    // 2. Actualizar saldos y estado de la factura
+    // Actualizar estado y saldo de la factura
     const newBalance = previousBalance - amount;
     payable.balance = newBalance;
     payable.paid = (payable.paid || 0) + amount;
     payable.status = newBalance <= 0 ? 'Pagada' : 'Parcial';
 
-    // 3. Registrar el pago en el historial de la factura
-    if (!payable.payments) payable.payments = [];
-    payable.payments.push({
+    // Registrar el abono unificadamente en paymentsHistory
+    if (!payable.paymentsHistory) payable.paymentsHistory = [];
+    payable.paymentsHistory.push({
         date: new Date().toLocaleString(),
         amount: amount,
         account: account.name
     });
 
     saveData();
-
-    // 4. Forzar la actualización inmediata de la interfaz y la tabla móvil/escritorio
     refreshAllUI();
-    renderPayables();
 
-    // 5. Cerrar el modal de historial y abonos para reflejar los cambios en pantalla
-    closePayableHistoryModal();
+    // Actualizar el modal de historial en tiempo real para mostrar el nuevo abono
+    openPayableHistoryModal(payable.id);
+    document.getElementById('payable-pay-amount').value = '';
 
-    // 6. Confirmación y opción de enviar el comprobante por WhatsApp
     if (confirm(`¡Abono registrado con éxito por ${formatCOP(amount)}!\n\n¿Deseas enviar el comprobante de pago por WhatsApp al proveedor?`)) {
         sendPayablePaymentWhatsApp(payable, amount, previousBalance, newBalance, account.name);
     }
 }
 
-     function renderClients() {
+function openPayableHistoryModal(id) {
+    const inv = state.payables.find(p => p.id === id);
+    if (!inv) return;
+
+    document.getElementById('payable-history-modal').classList.remove('hidden');
+    document.getElementById('payable-inv-id').value = inv.id;
+    document.getElementById('payable-modal-title').innerText = `Factura #${inv.num}`;
+    document.getElementById('payable-modal-total').innerText = formatCOP(inv.total);
+
+    const balance = inv.balance !== undefined ? inv.balance : (inv.total - (inv.paid || 0));
+    document.getElementById('payable-modal-balance').innerText = formatCOP(balance);
+
+    const statusTag = document.getElementById('payable-modal-status');
+    if (balance <= 0) {
+        statusTag.innerText = 'PAGADA';
+        statusTag.className = 'px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold';
+        document.getElementById('payable-payment-form').classList.add('hidden');
+    } else {
+        statusTag.innerText = 'PENDIENTE';
+        statusTag.className = 'px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold';
+        document.getElementById('payable-payment-form').classList.remove('hidden');
+    }
+
+    const list = document.getElementById('payable-payments-list');
+    list.innerHTML = '';
+    
+    // Leer de paymentsHistory o payments de forma segura
+    const payments = inv.paymentsHistory || inv.payments || [];
+
+    if (payments.length === 0) {
+        list.innerHTML = '<p class="p-3 text-center text-slate-400">Sin abonos registrados</p>';
+    } else {
+        payments.forEach(ph => {
+            const accName = typeof ph.account === 'number' ? (state.accounts.find(a => a.id === ph.account)?.name || 'Cuenta') : (ph.account || 'Cuenta');
+            list.innerHTML += `
+                <div class="p-2.5 flex justify-between items-center border-b border-slate-100">
+                    <div>
+                        <span class="font-bold text-slate-800 block">${formatCOP(ph.amount)}</span>
+                        <span class="text-[10px] text-slate-400">${ph.date} | ${accName}</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+}
+
+    function renderClients() {
     const tbody = document.getElementById('clients-table-body');
     const carteraBadge = document.getElementById('clients-total-cartera-badge');
     if (!tbody) return;
@@ -3907,6 +4197,7 @@ function updateInventoryFromEditedInvoice(oldItems, newItems) {
     if (state.clients.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">Sin clientes registrados</td></tr>';
         if (carteraBadge) carteraBadge.innerText = formatCOP(0);
+        renderClientCards(); // 🌟 Actualizar tarjetas vacías
         return;
     }
 
@@ -3914,7 +4205,7 @@ function updateInventoryFromEditedInvoice(oldItems, newItems) {
 
     state.clients.forEach(c => {
         const debt = c.debt || 0;
-        totalCarteraGeneral += debt; // Sumar la deuda de cada cliente al total general
+        totalCarteraGeneral += debt;
 
         tbody.innerHTML += `
             <tr class="hover:bg-slate-50 transition">
@@ -3933,10 +4224,13 @@ function updateInventoryFromEditedInvoice(oldItems, newItems) {
         `;
     });
 
-    // 🌟 Actualizar el valor total en la tarjeta gráfica superior
     if (carteraBadge) {
         carteraBadge.innerText = formatCOP(totalCarteraGeneral);
     }
+
+    // 🌟 LLAMADA AL RENDERIZADO DE LAS NUEVAS TARJETAS
+    renderClientCards();
+    renderClientAnalytics();
 }
         function sendClientDebtWhatsApp(clientId) {
             const client = state.clients.find(c => c.id === clientId);
@@ -4247,6 +4541,12 @@ function renderStatistics() {
             }
         });
     }
+    function renderStatistics() {
+    // ... (código existente de KPIs y gráficos del sistema)
+
+    // 🌟 LLAMADA AL NUEVO PANEL ANALÍTICO DE PRODUCTOS
+    renderProductAnalytics();
+}
 
     // ==========================================
     // 3. GRÁFICO 2: MÉTODOS DE PAGO (Doughnut Moderno)
@@ -5339,34 +5639,44 @@ function openClientWhatsAppFromCart() {
     window.open(url, '_blank');
 }
 function recalculateClientDebts() {
-    // 1. Reiniciar la deuda acumulada de todos los clientes a 0
-    state.clients.forEach(c => c.debt = 0);
+    const clientDebts = {};
+    const clientAbonos = {};
 
-    // 2. Recorrer todas las ventas registradas
     state.sales.forEach(sale => {
-        // Verificar si la venta pertenece a un cliente y fue a crédito
-        if (sale.clientName && sale.clientName !== 'Cliente Ocasional') {
-            const isCredit = sale.method === 'Crédito' || sale.method.startsWith('Crédito') || (sale.pendingBalance !== undefined && sale.pendingBalance > 0);
-            
-            if (isCredit) {
-                // Buscar si el cliente existe en la lista
-                let client = state.clients.find(c => c.name.toLowerCase() === sale.clientName.toLowerCase());
-                
-                // Determinar el monto pendiente de esta factura específica
-                const amountToAdd = sale.pendingBalance !== undefined ? sale.pendingBalance : sale.total;
+        if (!sale.clientName || sale.clientName === 'Cliente Ocasional') return;
+        const nameKey = sale.clientName.trim().toLowerCase();
 
-                if (client) {
-                    client.debt = (client.debt || 0) + amountToAdd;
-                } else {
-                    // Si el cliente no estaba registrado formalmente pero tiene una venta a crédito, lo creamos
-                    state.clients.push({
-                        id: Date.now() + Math.random(),
-                        name: sale.clientName,
-                        phone: 'Sin Teléfono',
-                        debt: amountToAdd
-                    });
-                }
+        const isAbono = sale.method && (sale.method.includes('Abono') || sale.method === 'Abono a Crédito');
+        if (isAbono) {
+            clientAbonos[nameKey] = (clientAbonos[nameKey] || 0) + (sale.total || 0);
+        } else {
+            const isCredit = sale.method === 'Crédito' || sale.method.startsWith('Crédito') || (sale.pendingBalance !== undefined && sale.pendingBalance > 0);
+            if (isCredit) {
+                const amountToAdd = sale.pendingBalance !== undefined ? sale.pendingBalance : sale.total;
+                clientDebts[nameKey] = (clientDebts[nameKey] || 0) + amountToAdd;
             }
+        }
+    });
+
+    state.clients.forEach(c => {
+        const nameKey = c.name.trim().toLowerCase();
+        const totalCred = clientDebts[nameKey] || 0;
+        const totalAb = clientAbonos[nameKey] || 0;
+        c.debt = Math.max(0, totalCred - totalAb);
+    });
+
+    Object.keys(clientDebts).forEach(nameKey => {
+        let client = state.clients.find(c => c.name.trim().toLowerCase() === nameKey);
+        if (!client) {
+            const originalName = state.sales.find(s => s.clientName && s.clientName.trim().toLowerCase() === nameKey)?.clientName || nameKey;
+            const totalCred = clientDebts[nameKey] || 0;
+            const totalAb = clientAbonos[nameKey] || 0;
+            state.clients.push({
+                id: Date.now() + Math.random(),
+                name: originalName,
+                phone: 'Sin Teléfono',
+                debt: Math.max(0, totalCred - totalAb)
+            });
         }
     });
 }
@@ -5426,6 +5736,184 @@ function closeQuickProductModal() {
     document.getElementById('quick-product-modal').classList.add('hidden');
 }
 
+// FUNCIÓN PARA CALCULAR Y RENDERIZAR EL TOP DE CLIENTES FRECUENTES Y DE MAYOR VOLUMEN
+function renderClientAnalytics() {
+    const frequentBody = document.getElementById('top-frequent-clients-body');
+    const volumeBody = document.getElementById('top-volume-clients-body');
+    if (!frequentBody || !volumeBody) return;
+
+    frequentBody.innerHTML = '';
+    volumeBody.innerHTML = '';
+
+    const clientStats = {};
+
+    // Agrupar y sumarizar transacciones de ventas registradas
+    state.sales.forEach(s => {
+        const name = (s.clientName || 'Cliente Ocasional').trim();
+        if (name.toLowerCase() === 'cliente ocasional') return; // Excluir compras anónimas
+
+        const isAbono = s.method && (s.method.includes('Abono') || s.method === 'Abono a Crédito');
+        if (isAbono) return; // Excluir abonos de cartera
+
+        if (!clientStats[name]) {
+            clientStats[name] = { count: 0, totalSpent: 0 };
+        }
+        clientStats[name].count += 1;
+        clientStats[name].totalSpent += (s.total || 0);
+    });
+
+    const statsArray = Object.keys(clientStats).map(name => ({
+        name,
+        count: clientStats[name].count,
+        totalSpent: clientStats[name].totalSpent
+    }));
+
+    if (statsArray.length === 0) {
+        frequentBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-slate-400">Sin datos de compras registradas</td></tr>';
+        volumeBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-slate-400">Sin datos de compras registradas</td></tr>';
+        return;
+    }
+
+    // 1. Top Frecuencia (Ordenado por N° de compras descendente)
+    const sortedByFreq = [...statsArray].sort((a, b) => b.count - a.count).slice(0, 5);
+    sortedByFreq.forEach((c, idx) => {
+        let badge = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+        frequentBody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="p-2.5 font-bold text-slate-800">${badge} ${c.name}</td>
+                <td class="p-2.5 text-center font-semibold text-emerald-600">${c.count}</td>
+                <td class="p-2.5 text-right font-bold text-slate-900">${formatCOP(c.totalSpent)}</td>
+            </tr>
+        `;
+    });
+
+    // 2. Top Volumen (Ordenado por Dinero Total gastado descendente)
+    const sortedByVol = [...statsArray].sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5);
+    sortedByVol.forEach((c, idx) => {
+        let badge = idx === 0 ? '👑' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+        volumeBody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="p-2.5 font-bold text-slate-800">${badge} ${c.name}</td>
+                <td class="p-2.5 text-center font-semibold text-slate-600">${c.count}</td>
+                <td class="p-2.5 text-right font-bold text-emerald-600">${formatCOP(c.totalSpent)}</td>
+            </tr>
+        `;
+    });
+}
+// FUNCIÓN PARA CALCULAR Y RENDERIZAR EL TOP DE PRODUCTOS (FRECUENCIA Y VOLUMEN)
+function renderProductAnalytics() {
+    const frequentBody = document.getElementById('top-frequent-products-body');
+    const volumeBody = document.getElementById('top-volume-products-body');
+    if (!frequentBody || !volumeBody) return;
+
+    frequentBody.innerHTML = '';
+    volumeBody.innerHTML = '';
+
+    const productStats = {};
+
+    // Procesar todas las ventas registradas en state.sales (Efectivo, Transferencia, Crédito)
+    state.sales.forEach(s => {
+        const isAbono = s.method && (s.method.includes('Abono') || s.method === 'Abono a Crédito');
+        if (isAbono) return; // Omitir registros de abono que no son venta directa de inventario
+
+        if (s.items && Array.isArray(s.items)) {
+            s.items.forEach(item => {
+                const name = (item.name || 'Producto').trim();
+                if (!productStats[name]) {
+                    productStats[name] = { qty: 0, totalRevenue: 0 };
+                }
+                productStats[name].qty += (item.qty || 0);
+                productStats[name].totalRevenue += ((item.price || 0) * (item.qty || 0));
+            });
+        }
+    });
+
+    const statsArray = Object.keys(productStats).map(name => ({
+        name,
+        qty: productStats[name].qty,
+        totalRevenue: productStats[name].totalRevenue
+    }));
+
+    if (statsArray.length === 0) {
+        frequentBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-slate-400">Sin datos de ventas de productos</td></tr>';
+        volumeBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-slate-400">Sin datos de ventas de productos</td></tr>';
+        return;
+    }
+
+    // 1. Top Frecuencia (Ordenado por mayor cantidad de unidades vendidas)
+    const sortedByFreq = [...statsArray].sort((a, b) => b.qty - a.qty).slice(0, 5);
+    sortedByFreq.forEach((p, idx) => {
+        let badge = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+        frequentBody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="p-2.5 font-bold text-slate-800">${badge} ${p.name}</td>
+                <td class="p-2.5 text-center font-semibold text-emerald-600">${p.qty} unids.</td>
+                <td class="p-2.5 text-right font-bold text-slate-900">${formatCOP(p.totalRevenue)}</td>
+            </tr>
+        `;
+    });
+
+    // 2. Top Volumen (Ordenado por mayor dinero recaudado en ventas)
+    const sortedByVol = [...statsArray].sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 5);
+    sortedByVol.forEach((p, idx) => {
+        let badge = idx === 0 ? '👑' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+        volumeBody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="p-2.5 font-bold text-slate-800">${badge} ${p.name}</td>
+                <td class="p-2.5 text-center font-semibold text-slate-600">${p.qty} unids.</td>
+                <td class="p-2.5 text-right font-bold text-emerald-600">${formatCOP(p.totalRevenue)}</td>
+            </tr>
+        `;
+    });
+}
+// FUNCIÓN PARA RENDERIZAR LAS TARJETAS DINÁMICAS DE CADA CLIENTE
+function renderClientCards() {
+    const grid = document.getElementById('client-cards-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    if (state.clients.length === 0) {
+        grid.innerHTML = '<div class="col-span-full p-4 bg-white rounded-2xl text-center text-slate-400 text-xs border">No hay clientes registrados.</div>';
+        return;
+    }
+
+    state.clients.forEach(c => {
+        const debt = c.debt || 0;
+        const hasDebt = debt > 0;
+
+        grid.innerHTML += `
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border ${hasDebt ? 'border-l-4 border-l-rose-500 border-slate-100 dark:border-slate-700' : 'border-l-4 border-l-emerald-500 border-slate-100 dark:border-slate-700'} flex flex-col justify-between transition hover:shadow-md">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cliente de Crédito</span>
+                        <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base mt-0.5">${c.name}</h3>
+                        <p class="text-xs text-slate-400 mt-0.5"><i class="fa-solid fa-phone mr-1"></i> ${c.phone || 'Sin teléfono'}</p>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl ${hasDebt ? 'bg-rose-50 text-rose-600 dark:bg-slate-700 dark:text-rose-400' : 'bg-emerald-50 text-emerald-600 dark:bg-slate-700 dark:text-emerald-400'} flex items-center justify-center text-sm shadow-sm">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                </div>
+                <div class="mt-4 border-t border-slate-100 dark:border-slate-700 pt-3 flex justify-between items-end">
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Deuda Actual</span>
+                        <div class="text-base md:text-lg font-bold ${hasDebt ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
+                            ${formatCOP(debt)}
+                        </div>
+                        
+                    </div>
+                    <div class="space-x-1">
+                        ${debt > 0 ? `<button onclick="openPaymentModal(${c.id})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-sm">Abonar</button>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+}
+function updateCartDiscount(val) {
+    const activeCart = getActiveCart();
+    activeCart.discount = parseFloat(val) || 0;
+    renderCart();
+}
  </script>
  <!-- MODAL EDICIÓN COMPLETA DE FACTURA CON ARTÍCULOS REALES -->
 <div id="edit-billing-modal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center p-4 z-50">
