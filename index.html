@@ -2188,8 +2188,8 @@ async function saveData() {
         document.getElementById('current-date').innerText = new Date().toLocaleDateString();
 
 function switchTab(tab) {
-    // 🔒 PROTECCIÓN DE MÓDULOS CON PIN 1234 (Incluye Estadísticas y Reportes)
-    if (tab === 'inventory' || tab === 'billing' || tab === 'clients' || tab === 'payables' || tab === 'accounts' || tab === 'statistics' || tab === 'reports') {
+    // 🔒 PROTECCIÓN DE MÓDULOS CON PIN 1234
+    if (tab === 'inventory' || tab === 'billing' || tab === 'clients' || tab === 'payables' || tab === 'accounts' || tab === 'statistics' || tab === 'reports' || tab === 'treasury') {
         let moduleName = 'este módulo';
         if (tab === 'inventory') moduleName = 'Inventarios';
         if (tab === 'billing') moduleName = 'Facturación';
@@ -2198,23 +2198,25 @@ function switchTab(tab) {
         if (tab === 'accounts') moduleName = 'Bancos & Efectivo';
         if (tab === 'statistics') moduleName = 'Estadísticas';
         if (tab === 'reports') moduleName = 'Reportes';
-        if (tab === 'treasury') renderTreasuryModule();
+        if (tab === 'treasury') moduleName = 'Tesorería';
 
         const pin = prompt(`Ingrese el código PIN de seguridad de 4 dígitos para acceder a ${moduleName}:`);
-        if (pin === null) return; // Si cancela, no hace nada
+        if (pin === null) return; 
         if (pin.trim() !== "1234") {
             alert("❌ Código PIN incorrecto. Acceso denegado.");
             return;
         }
     }
 
-    const tabs = ['pos', 'inventory', 'cash', 'accounts', 'payables', 'clients', 'statistics', 'reports', 'billing'];
+    // 🌟 AQUÍ ESTÁ LA CORRECCIÓN: Lista completa de todas las vistas del sistema
+    const tabs = ['pos', 'inventory', 'cash', 'accounts', 'payables', 'clients', 'statistics', 'reports', 'billing', 'treasury'];
+    
     tabs.forEach(t => {
         const view = document.getElementById(`view-${t}`);
         const btn = document.getElementById(`btn-${t}`);
         const mobBtn = document.getElementById(`mob-btn-${t}`);
 
-        if (view) view.classList.add('hidden');
+        if (view) view.classList.add('hidden'); // Oculta todas las vistas
         if (btn) {
             btn.classList.remove('bg-emerald-600', 'text-white');
             btn.classList.add('hover:bg-slate-800');
@@ -2225,6 +2227,7 @@ function switchTab(tab) {
         }
     });
 
+    // Muestra únicamente la vista seleccionada
     const activeView = document.getElementById(`view-${tab}`);
     const activeBtn = document.getElementById(`btn-${tab}`);
     const activeMobBtn = document.getElementById(`mob-btn-${tab}`);
@@ -2248,12 +2251,14 @@ function switchTab(tab) {
         clients: 'Clientes y Créditos',
         statistics: 'Estadísticas Profesionales',
         reports: 'Reportes y Estadísticas',
-        billing: 'Módulo de Facturación General'
+        billing: 'Módulo de Facturación General',
+        treasury: 'Módulo de Tesorería & Egresos'
     };
-    document.getElementById('page-title').innerText = titles[tab] || '';
     
+    document.getElementById('page-title').innerText = titles[tab] || '';
     updateModuleInfoBanner(tab);
 
+    // Funciones de actualización específicas según el módulo
     if (tab === 'cash') renderCashControl();
     if (tab === 'accounts') renderAccounts();
     if (tab === 'payables') {
@@ -2264,6 +2269,7 @@ function switchTab(tab) {
     if (tab === 'reports') renderReports();
     if (tab === 'billing') renderBillingModule();
     if (tab === 'clients') renderClients();
+    if (tab === 'treasury') renderTreasuryModule();
 }
         function updateClientsDatalist() {
             const datalist = document.getElementById('clients-datalist');
