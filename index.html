@@ -650,10 +650,6 @@ let state = {
     <i class="fa-solid fa-vault w-5 text-amber-400"></i> Tesorería
 </button>
 
-<!-- En el menú flotante móvil (#mobile-more-menu) -->
-<button onclick="switchTab('treasury'); toggleMobileMoreMenu();" id="mob-btn-treasury" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 font-medium text-xs active:bg-emerald-50">
-    <i class="fa-solid fa-vault text-amber-500 text-base"></i> Tesorería
-</button>
                 <button onclick="switchTab('clients')" id="btn-clients" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-800 transition">
                     <i class="fa-solid fa-users w-5"></i> Clientes & Crédito
                 </button>
@@ -729,6 +725,9 @@ let state = {
                     </button>
                     <button onclick="switchTab('billing'); toggleMobileMoreMenu();" id="mob-btn-billing" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 font-medium text-xs active:bg-emerald-50">
     <i class="fa-solid fa-file-invoice-dollar text-emerald-600 text-base"></i> Facturación
+</button>
+<button onclick="switchTab('treasury'); toggleMobileMoreMenu();" id="mob-btn-treasury" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 font-medium text-xs active:bg-emerald-50">
+    <i class="fa-solid fa-vault text-amber-500 text-base"></i> Tesorería
 </button>
                     <button onclick="switchTab('payables'); toggleMobileMoreMenu();" id="mob-btn-payables" class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 font-medium text-xs active:bg-emerald-50">
                         <i class="fa-solid fa-file-invoice-dollar text-emerald-600 text-base"></i> Cuentas x Pagar
@@ -2175,6 +2174,7 @@ async function saveData() {
             renderReports();
             updateAccountSelects();
             updateClientsDatalist();
+            renderTreasuryModule();
         }
 
         function formatCOP(amount) {
@@ -2198,6 +2198,7 @@ function switchTab(tab) {
         if (tab === 'accounts') moduleName = 'Bancos & Efectivo';
         if (tab === 'statistics') moduleName = 'Estadísticas';
         if (tab === 'reports') moduleName = 'Reportes';
+        if (tab === 'treasury') renderTreasuryModule();
 
         const pin = prompt(`Ingrese el código PIN de seguridad de 4 dígitos para acceder a ${moduleName}:`);
         if (pin === null) return; // Si cancela, no hace nada
@@ -5913,6 +5914,197 @@ function updateCartDiscount(val) {
     const activeCart = getActiveCart();
     activeCart.discount = parseFloat(val) || 0;
     renderCart();
+}
+// --- LÓGICA MÓDULO TESORERÍA ---
+
+// 1. Inicializar lista de gastos en el estado si no existe
+if (!state.treasuryExpenses) {
+    state.treasuryExpenses = [];
+}
+
+// 2. Registro de información e icono explicativo del módulo
+modulesInfo.treasury = {
+    title: "Módulo de Tesorería",
+    icon: "fa-vault",
+    desc: "Módulo para la administración de egresos operativos: pagos de nómina a empleados y gastos varios de caja menor."
+};
+
+// 3. Modificar la función switchTab existente agregando 'treasury' al arreglo de tabs
+// Asegúrate de que el arreglo de pestañas en tu switchTab incluya 'treasury':
+// const tabs = ['pos', 'inventory', 'cash', 'accounts', 'payables', 'clients', 'statistics', 'reports', 'billing', 'treasury'];
+
+// 4. Función de Renderizado del Módulo Tesorería
+function renderTreasuryModule() {
+    const tbody = document.getElementById('treasury-table-body');
+    const payrollBadge = document.getElementById('treasury-total-payroll');
+    const pettyCashBadge = document.getElementById('treasury-total-pettycash');
+
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!state.treasuryExpenses) state.treasuryExpenses = [];
+
+    let totalPayroll = 0;
+    let totalPettyCash = 0;
+
+    state.treasuryExpenses.forEach(exp => {
+        if (exp.type === 'NOMINA') totalPayroll += exp.amount;
+        if (exp.type === 'CAJA_MENOR') totalPettyCash += exp.amount;
+    });
+
+    if (payrollBadge) payrollBadge.innerText = formatCOP(totalPayroll);
+    if (pettyCashBadge) pettyCashBadge.innerText = formatCOP(totalPettyCash);
+
+    if (state.treasuryExpenses.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400 font-medium">No se han registrado egresos de tesorería aún.</td></tr>';
+        return;
+    }
+
+    state.treasuryExpenses.forEach(exp => {
+        const isNomina = exp.type === 'NOMINA';
+        const typeBadge = isNomina 
+            ? '<span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded-md font-bold text-[10px]">NÓMINA</span>' 
+            : '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md font-bold text-[10px]">CAJA MENOR</span>';
+
+        tbody.innerHTML += `
+            <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                <td class="p-3 md:p-4 font-bold text-slate-800">
+                    <div class="flex items-center gap-2">
+                        ${typeBadge}
+                    </div>
+                </td>
+                <td class="p-3 md:p-4 text-slate-500">${exp.date}</td>
+                <td class="p-3 md:p-4">
+                    <div class="font-bold text-slate-800">${exp.beneficiary}</div>
+                    <div class="text-xs text-slate-500">${exp.description}</div>
+                </td>
+                <td class="p-3 md:p-4 font-medium text-slate-700">${exp.accountName}</td>
+                <td class="p-3 md:p-4 font-bold text-right text-rose-600">-${formatCOP(exp.amount)}</td>
+                <td class="p-3 md:p-4 text-center space-x-1">
+                    <button onclick="shareTreasuryWhatsApp(${exp.id})" class="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg text-xs font-bold transition" title="Compartir WhatsApp">
+                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                    </button>
+                    <button onclick="deleteTreasuryExpense(${exp.id})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs" title="Eliminar">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// 5. Controles del Modal de Tesorería
+function openTreasuryModal(type) {
+    if (!state.cashRegister.isOpen) return alert('La caja está cerrada. No se pueden registrar egresos.');
+
+    document.getElementById('treasury-type').value = type;
+    document.getElementById('treasury-beneficiary').value = '';
+    document.getElementById('treasury-description').value = '';
+    document.getElementById('treasury-amount').value = '';
+
+    const label = document.getElementById('treasury-beneficiary-label');
+    const title = document.getElementById('treasury-modal-title');
+
+    if (type === 'NOMINA') {
+        title.innerText = 'Registrar Pago de Nómina';
+        label.innerText = 'Nombre del Empleado';
+    } else {
+        title.innerText = 'Registrar Gasto de Caja Menor';
+        label.innerText = 'Beneficiario / Proveedor de Servicio';
+    }
+
+    // Cargar select de cuentas disponibles
+    const select = document.getElementById('treasury-account');
+    select.innerHTML = '';
+    state.accounts.forEach(acc => {
+        select.innerHTML += `<option value="${acc.id}">${acc.name} (${acc.type}) - ${formatCOP(acc.balance)}</option>`;
+    });
+
+    document.getElementById('treasury-modal').classList.remove('hidden');
+}
+
+function closeTreasuryModal() {
+    document.getElementById('treasury-modal').classList.add('hidden');
+}
+
+// 6. Guardar Egreso y Descontar Dinero de la Cuenta Seleccionada
+function saveTreasuryExpense() {
+    const type = document.getElementById('treasury-type').value;
+    const beneficiary = document.getElementById('treasury-beneficiary').value.trim();
+    const description = document.getElementById('treasury-description').value.trim();
+    const amount = parseFloat(document.getElementById('treasury-amount').value);
+    const accountId = parseInt(document.getElementById('treasury-account').value);
+
+    if (!beneficiary || !description || isNaN(amount) || amount <= 0) {
+        return alert('Por favor completa todos los campos con datos válidos.');
+    }
+
+    const account = state.accounts.find(a => a.id === accountId);
+    if (!account) return alert('Cuenta no válida.');
+
+    if (amount > account.balance) {
+        return alert(`Saldo insuficiente en la cuenta ${account.name} (Saldo disponible: ${formatCOP(account.balance)}).`);
+    }
+
+    // Descontar saldo de la cuenta elegida
+    account.balance -= amount;
+
+    const newExpense = {
+        id: Date.now(),
+        type: type,
+        date: new Date().toLocaleString(),
+        beneficiary: beneficiary,
+        description: description,
+        amount: amount,
+        accountId: account.id,
+        accountName: account.name
+    };
+
+    if (!state.treasuryExpenses) state.treasuryExpenses = [];
+    state.treasuryExpenses.unshift(newExpense);
+
+    saveData();
+    closeTreasuryModal();
+    refreshAllUI();
+    renderTreasuryModule();
+
+    alert(`¡Egreso de Tesorería registrado con éxito por ${formatCOP(amount)}!`);
+}
+
+// 7. Eliminar Egreso de Tesorería
+function deleteTreasuryExpense(id) {
+    const pin = prompt("Ingrese el código PIN de seguridad de 4 dígitos para eliminar este registro:");
+    if (pin === null) return;
+    if (pin.trim() !== "1234") return alert("❌ Código PIN incorrecto.");
+
+    if (confirm('¿Deseas eliminar este registro de tesorería?')) {
+        state.treasuryExpenses = state.treasuryExpenses.filter(e => e.id !== id);
+        saveData();
+        refreshAllUI();
+        renderTreasuryModule();
+    }
+}
+
+// 8. Compartir Comprobante de Egreso por WhatsApp
+function shareTreasuryWhatsApp(id) {
+    const exp = state.treasuryExpenses.find(e => e.id === id);
+    if (!exp) return;
+
+    const isNomina = exp.type === 'NOMINA';
+    let msg = `=====================================\n`;
+    msg += `    *COMPROBANTE DE EGRESO - TESORERÍA*\n`;
+    msg += `=====================================\n\n`;
+    msg += `📌 *Tipo de Operación:* ${isNomina ? 'PAGO DE NÓMINA' : 'GASTO CAJA MENOR'}\n`;
+    msg += `📅 *Fecha:* ${exp.date}\n`;
+    msg += `👤 *Beneficiario:* ${exp.beneficiary}\n`;
+    msg += `📝 *Concepto:* ${exp.description}\n`;
+    msg += `💳 *Cuenta Origen:* ${exp.accountName}\n\n`;
+    msg += `💵 *MONTO PAGADO:* *${formatCOP(exp.amount)}*\n\n`;
+    msg += `=====================================\n`;
+    msg += `🏢 *POS Master* • _Control de Tesorería_`;
+
+    const encoded = encodeURIComponent(msg);
+    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
 }
  </script>
  <!-- MODAL EDICIÓN COMPLETA DE FACTURA CON ARTÍCULOS REALES -->
